@@ -1,0 +1,57 @@
+{
+    "name": "rubix/extras",
+    "type": "library",
+    "description": "",
+    "homepage": "https://rubixml.com",
+    "license": "MIT",
+    "keywords": [
+        "php", "machine-learning", "rubix", "ml"
+    ],
+    "authors": [
+        {
+            "name": "Contributors",
+            "homepage": "https://github.com/RubixML/Extras/graphs/contributors"
+        }
+    ],
+    "require": {
+        "php": ">=7.2",
+        "rubix/ml": ">=0.0.20-rc1",
+        "wamania/php-stemmer": "^2.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "2.16.*",
+        "phpbench/phpbench": "0.16.*",
+        "phpstan/phpstan": "0.12.*",
+        "phpstan/phpstan-phpunit": "0.12.*",
+        "phpunit/phpunit": "8.5.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rubix\\ML\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rubix\\ML\\Tests\\": "tests/",
+            "Rubix\\ML\\Benchmarks\\": "benchmarks/"
+        }
+    },
+    "scripts": {
+        "build": [
+            "@composer install",
+            "@analyze",
+            "@test",
+            "@check"
+        ],
+        "analyze": "phpstan analyse -c phpstan.neon",
+        "benchmark": "phpbench run --report=env --report=aggregate",
+        "check": "php-cs-fixer fix --config=.php_cs.dist -v --dry-run --using-cache=no",
+        "fix": "php-cs-fixer fix --config=.php_cs.dist",
+        "test": "phpunit"
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "process-timeout": 3000
+    }
+}
