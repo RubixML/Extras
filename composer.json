@@ -1,7 +1,7 @@
 {
     "name": "rubix/extras",
     "type": "library",
-    "description": "",
+    "description": "Experimental features for the Rubix ML library.",
     "homepage": "https://rubixml.com",
     "license": "MIT",
     "keywords": [
@@ -15,7 +15,7 @@
     ],
     "require": {
         "php": ">=7.2",
-        "rubix/ml": ">=0.0.20-rc1",
+        "rubix/ml": "^0.0.20-rc1",
         "wamania/php-stemmer": "^2.0"
     },
     "require-dev": {
@@ -53,5 +53,7 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "process-timeout": 3000
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

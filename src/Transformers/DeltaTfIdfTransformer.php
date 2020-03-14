@@ -169,7 +169,7 @@ class DeltaTfIdfTransformer implements Elastic
         $idfs = [];
 
         foreach ($this->dfs as $df) {
-            $idfs[] = log($this->n / $df) + 1.0;
+            $idfs[] = 1.0 + log($this->n / $df);
         }
 
         $entropies = array_fill(0, count($this->totals), 0.0);
