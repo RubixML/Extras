@@ -6,10 +6,10 @@ use Tensor\Matrix;
 use InvalidArgumentException;
 
 /**
- * ISRU
+ * ISRLU
  *
- * The Inverse Square Root Unit is a computationally efficient sigmoid-shaped activation
- * function that saturates at user-defined value.
+ * Inverse Square Root Linear Unit is a smooth rectifier similar to ELU but more
+ * computationally efficient.
  *
  * References:
  * [1] B. Carlile et al. (2017). Improving Deep Learning by Inverse Square Root Linear
@@ -19,7 +19,7 @@ use InvalidArgumentException;
  * @package     Rubix/ML
  * @author      Andrew DalPino
  */
-class ISRU implements ActivationFunction
+class ISRLU implements ActivationFunction
 {
     /**
      * The absolute value at which the output saturates.
@@ -59,7 +59,7 @@ class ISRU implements ActivationFunction
      */
     public function _compute(float $z) : float
     {
-        return $z / sqrt(1.0 + $this->alpha * $z ** 2);
+        return $z >= 0.0 ? $z : $z / sqrt(1.0 + $this->alpha * $z ** 2);
     }
 
     /**
@@ -79,7 +79,7 @@ class ISRU implements ActivationFunction
             $temp = [];
 
             foreach ($rowZ as $j => $valueZ) {
-                $temp[] = $valueZ !== 0.0 ? ($rowComputed[$j] / $valueZ) ** 3 : 1.0;
+                $temp[] = $valueZ >= 0.0 ? 1.0 : ($rowComputed[$j] / $valueZ) ** 3;
             }
 
             $derivative[] = $temp;
