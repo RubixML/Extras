@@ -5,7 +5,8 @@
     "homepage": "https://rubixml.com",
     "license": "MIT",
     "keywords": [
-        "php", "machine-learning", "rubix", "ml"
+        "php", "machine-learning", "rubix", "ml", "extras", "neural-network", "deep-learning",
+        "analytics", "data-mining"
     ],
     "authors": [
         {
@@ -16,6 +17,7 @@
     "require": {
         "php": ">=7.2",
         "rubix/ml": ">=0.0.20-rc1",
+        "rubix/tensor": "^2.0.4",
         "wamania/php-stemmer": "^2.0"
     },
     "require-dev": {
