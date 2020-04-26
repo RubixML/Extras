@@ -41,7 +41,7 @@ class Word2Vec implements Embedder
      * 
      * @var array[]     
      */	
-	protected $corpus = array();
+    protected $corpus = array();
 
     /**
      * An array of each word in the corpus for preprocessing purposes.
@@ -132,41 +132,42 @@ class Word2Vec implements Embedder
      *
      * @var int   
      */		
-	protected int $rand_multiplier = 4294967296;		
+
+	protected $rand_multiplier = 4294967296;		
     /**
      * The layer of the network, accepts 'neg' or 'hs'.
      *
      * @var string     
      */		
-	protected string $layer;
+	protected $layer;
 
     /**
      * The window size for the skip-gram model.
      *
      * @var int     
      */		
-	protected int $window;
+	protected $window;
 
     /**
      * Vector dimension size.
      *
      * @var int     
      */		
-	protected int $dimensions;	
+	protected $dimensions;	
 
     /**
      * The degree to which noise words are removed from the training text.
      *
      * @var float     
      */		
-	protected float $sampleRate;	
+	protected $sampleRate;	
 
     /**
      * The amount of L2 regularization applied to the weights of the output layer.
      *
      * @var float     
      */		
-	protected float $alpha;	
+	protected $alpha;	
 
     /**
      * The maximum number of training epochs. i.e. the number of times to iterate
@@ -174,21 +175,21 @@ class Word2Vec implements Embedder
      *
      * @var int     
      */		
-	protected int $epochs;	
+	protected $epochs;	
 
     /**
      * The minimum times a word must appear in the corpus to be considered in the training text.
      *
      * @var int     
      */		
-	protected int $minCount;	
+	protected $minCount;	
 
     /**
      * The total number of unique words in the corpus.
      *
      * @var int     
      */		
-	protected int $vocab_count;						
+	protected $vocab_count;						
 
     /**
      * @param string $layer
@@ -325,7 +326,7 @@ class Word2Vec implements Embedder
      * @param string[] $sentences
      *
      */	
-	private function preprocess( array $sentences) : void
+	private function preprocess(array $sentences) : void
 	{
 		$words = $this->prepCorpus($sentences);
 
@@ -564,9 +565,9 @@ class Word2Vec implements Embedder
      */		
 	private function buildHeap(array $vocabulary) : array
 	{
-		$heap = new Heap($vocabulary);
-
+		$heap      = new Heap($vocabulary);
 		$max_range = (count($vocabulary) - 2);
+
 		foreach(range(0, $max_range) as $i){
 			$min_1 = $heap->heappop();
 			$min_2 = $heap->heappop();
@@ -581,7 +582,6 @@ class Word2Vec implements Embedder
 
 				$heap->heappush($new_item);				
 			}
-
 		}
 	
 		return $heap->heap();	
@@ -936,9 +936,9 @@ class Word2Vec implements Embedder
 
     /**
      * Determining if layer is acceptable.
+     *
      * @param string $layer
      * @return bool
-     *
      */
     private function acceptedLayer(string $layer) : bool
     {
@@ -951,33 +951,5 @@ class Word2Vec implements Embedder
     	return true;
     }
 
-    /**
-     * Serializes and saves the model for future use.
-     *
-     */
-    public function save($file_path = false){
-    	$save = serialize($this);
 
-    	$file_path = $file_path ?? 'w2v_' . microtime(true);
-    	file_put_contents( $file_path . '.model', $save);
-    }
-
-    /**
-     * Loads a previously saved model.
-     * @param string $file_path
-     * @return \phpw2v\Word2Vec $Word2Vec
-     *
-     */
-    public function load($file_path){
-    	$file_path .= '.model';
-
-    	if(!file_exists($file_path)){
-    		throw new OutOfBoundsException('File path does not exist.');
-    	}
-
-    	$load = file_get_contents($file_path);
-
-    	return $Word2Vec = unserialize($load);
-    }
-    
 }

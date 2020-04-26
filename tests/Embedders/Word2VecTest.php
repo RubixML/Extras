@@ -16,8 +16,19 @@ use InvalidArgumentException;
  */
 class Word2VecTest extends TestCase
 {
+
+    /**
+     * The number of samples in the validation set.
+     *
+     * @var int
+     */    
     protected const DATASET_SIZE = 2;
 
+    /**
+     * Constant used to see the random number generator.
+     *
+     * @var int
+     */
     protected const RANDOM_SEED = 0;
 
     /**
@@ -48,6 +59,9 @@ class Word2VecTest extends TestCase
         srand(self::RANDOM_SEED);
     }
 
+    /**
+     * @test
+     */
     protected function assertPreConditions() : void
     {
         $this->assertFalse($this->embedder->trained());
