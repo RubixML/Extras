@@ -16,12 +16,11 @@ use InvalidArgumentException;
  */
 class Word2VecTest extends TestCase
 {
-
     /**
      * The number of samples in the validation set.
      *
      * @var int
-     */    
+     */
     protected const DATASET_SIZE = 2;
 
     /**
@@ -39,18 +38,17 @@ class Word2VecTest extends TestCase
     /**
      * @var \Rubix\ML\Datasets\Unlabeled
      */
-    protected $sampleDataset;    
+    protected $sampleDataset;
 
     /**
      * @before
      */
     protected function setUp() : void
     {
-        $this->sampleDataset = new Unlabeled(array(
+        $this->sampleDataset = new Unlabeled([
             ['the quick brown fox jumped over the lazy dog'],
-            ['the quick dog runs fast']            
-        ));
-
+            ['the quick dog runs fast']
+        ]);
 
         $this->embedder = new Word2Vec('neg', 2, 100, 0, .05, 1000, 1);
 
@@ -62,7 +60,7 @@ class Word2VecTest extends TestCase
     /**
      * @test
      */
-    protected function assertPreConditions() : void
+    public function assertPreConditions() : void
     {
         $this->assertFalse($this->embedder->trained());
     }
@@ -103,13 +101,13 @@ class Word2VecTest extends TestCase
     public function params() : void
     {
         $expected = [
-            'layer'       => 'neg',
-            'window'      => 2,
-            'dimensions'  => 100,
+            'layer' => 'neg',
+            'window' => 2,
+            'dimensions' => 100,
             'sample_rate' => 0,
-            'alpha'       => .05,
-            'epochs'      => 1000,
-            'min_count'   => 1,
+            'alpha' => .05,
+            'epochs' => 1000,
+            'min_count' => 1,
         ];
 
         $this->assertEquals($expected, $this->embedder->params());
@@ -142,7 +140,4 @@ class Word2VecTest extends TestCase
         $this->assertCount(self::DATASET_SIZE, $samples);
         $this->assertCount(1, $samples[0]);
     }
-
-
-
 }
