@@ -22,7 +22,7 @@ use InvalidArgumentException;
 class Heap
 {
     /**
-     * An array of sanitized and exploded sentences.
+     * An array of words from a corpus arranged in a manner that maintains the heap invariant.
      *
      * @var mixed[]
      */
@@ -58,13 +58,13 @@ class Heap
      */
     public function heappop() : ?array
     {
-        if (!is_array($this->heap) || empty($this->heap)) {
+        if (!is_array($this->heap) OR empty($this->heap)) {
             return null;
         }
 
         $last_element = array_pop($this->heap);
 
-        if (!is_array($this->heap) || empty($this->heap)) {
+        if (!is_array($this->heap) OR empty($this->heap)) {
             return $last_element;
         }
 
@@ -142,7 +142,7 @@ class Heap
                 $right_heap = $this->heap[$right_pos]['count'];
             }
             
-            if ($right_pos < $end_pos && ($this->heap[$child_pos]['count'] >= $right_heap)) {
+            if ($right_pos < $end_pos AND ($this->heap[$child_pos]['count'] >= $right_heap)) {
                 $child_pos = $right_pos;
             }
 
@@ -168,9 +168,9 @@ class Heap
         $this->heap = array_values($x);
         $n = count($this->heap);
 
-        $max_range = (($n / 2) - 1);
+        $maxRange = (($n / 2) - 1);
 
-        foreach (array_reverse(range(0, $max_range)) as $i) {
+        foreach (array_reverse(range(0, $maxRange)) as $i) {
             $this->heap = $this->siftup($this->heap, ((int) $i));
         }
 

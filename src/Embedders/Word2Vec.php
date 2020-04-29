@@ -9,11 +9,8 @@ use Rubix\ML\NeuralNet\ActivationFunctions\Sigmoid;
 use Rubix\ML\Specifications\DatasetIsNotEmpty;
 use Rubix\ML\Specifications\SamplesAreCompatibleWithEmbedder;
 use Rubix\ML\Other\Helpers\Params;
-use Rubix\ML\Other\Traits\LoggerAware;
-
 use Tensor\Matrix;
 use Tensor\Vector;
-
 use InvalidArgumentException;
 
 /**
@@ -33,7 +30,6 @@ use InvalidArgumentException;
  */
 class Word2Vec implements Embedder
 {
-    use LoggerAware;
 
     /**
      * An array of sanitized and exploded sentences.
@@ -47,7 +43,7 @@ class Word2Vec implements Embedder
      *
      * @var int[]
      */
-    protected $raw_vocab = [];
+    protected $rawVocab = [];
 
     /**
      * An array containing each word in the corpus and it's respective index, count, and multiplier.
@@ -89,21 +85,21 @@ class Word2Vec implements Embedder
      *
      * @var int[]
      */
-    protected $vectors_lockf = [];
+    protected $vectorsLockf = [];
 
     /**
      * The L2-normalized word vectors from the model.
      *
      * @var Vector[]
      */
-    protected $vectors_norm = [];
+    protected $vectorsNorm = [];
 
     /**
      * The cumulative distrubtion table for negative sampling.
      *
      * @var int[]
      */
-    protected $cum_table = [];
+    protected $cumTable = [];
 
     /**
      * The last digit in the cumulative distribution table.
@@ -117,21 +113,22 @@ class Word2Vec implements Embedder
      *
      * @var \Tensor\Vector
      */
-    protected $neg_labels;
+    protected $negLabels;
 
     /**
      * The training method determined by the layer they determine.
      *
      * @var string
      */
-    protected $train_method;
+    protected $trainMethod;
 
     /**
      * Presetting random multiplier used to validate word probabilities in sub sampling.
      *
      * @var int
      */
-    protected $rand_multiplier = 4294967296;
+    protected $randMultiplier = 4294967296;
+
     /**
      * The layer of the network, accepts 'neg' or 'hs'.
      *
@@ -187,7 +184,7 @@ class Word2Vec implements Embedder
      *
      * @var int
      */
-    protected $vocab_count;
+    protected $vocabCount;
 
     /**
      * @param string $layer
@@ -208,12 +205,12 @@ class Word2Vec implements Embedder
         int $epochs = 10,
         int $minCount = 2
     ) {
-        if (!$this->acceptedLayer($layer)) {
-            throw new InvalidArgumentException('Layer must be neg or hs.');
+        if(!in_array($layer, ['neg', 'hs'])) {
+            throw new InvalidArgumentException("Layer must be neg or hs.");
         }
 
         if ($window > 5) {
-            throw new InvalidArgumentException('Window must be less than 5, $window given.');
+            throw new InvalidArgumentException("Window must be between 1 and 5, $window given.");
         }
 
         if ($dimensions < 5) {
@@ -243,7 +240,7 @@ class Word2Vec implements Embedder
         $this->alpha = $alpha;
         $this->epochs = $epochs;
         $this->minCount = $minCount;
-        $this->neg_labels = Vector::quick([1, 0]);
+        $this->negLabels = Vector::quick([1, 0]);
     }
 
     /**
@@ -300,12 +297,11 @@ class Word2Vec implements Embedder
         $this->preprocess($sentences);
         $this->prepareWeights();
 
-        $min_alpha = .0001;
-        $start_alpha = $this->alpha;
+        $minAlpha = 0.0001;
+        $startAlpha = $this->alpha;
 
         for ($i = 0; $i < $this->epochs; ++$i) {
-            $cur_epoch = $i;
-            $this->alpha = $start_alpha - (($start_alpha - $min_alpha) * ($cur_epoch) / $this->epochs);
+            $this->alpha = $startAlpha - (($startAlpha - $minAlpha) * ($i) / $this->epochs);
 
             $this->train_epoch_sg();
         }
@@ -315,6 +311,7 @@ class Word2Vec implements Embedder
 
     /**
      * Scanning vocab, preparing vocab, sorting vocab, setting sampling methods
+     *
      * @param string[] $sentences
      */
     private function preprocess(array $sentences) : void
@@ -328,11 +325,11 @@ class Word2Vec implements Embedder
         switch ($this->layer) {
             case 'hs':
                 $this->createBinaryTree();
-                $this->train_method = 'train_pair_sg_hs';
+                $this->trainMethod = 'train_pair_sg_hs';
                 break;
             case 'neg':
                 $this->createCumTable();
-                $this->train_method = 'train_pair_sg_neg';
+                $this->trainMethod = 'train_pair_sg_neg';
                 break;
         }
     }
@@ -348,10 +345,10 @@ class Word2Vec implements Embedder
         $words = [];
 
         foreach ($sentences as $sentence) {
-            $prepped_sentence = $this->prepSentence($sentence);
+            $preppedSentence = $this->prepSentence($sentence);
 
-            $this->corpus[] = $prepped_sentence;
-            $words = array_merge($words, $prepped_sentence);
+            $this->corpus[] = $preppedSentence;
+            $words = array_merge($words, $preppedSentence);
         }
 
         return $words;
@@ -381,7 +378,7 @@ class Word2Vec implements Embedder
     private function scanVocab(array $words) : void
     {
         foreach ($words as $i => $word) {
-            $this->raw_vocab[$word] = (int) ($this->raw_vocab[$word] ?? 0) + 1;
+            $this->rawVocab[$word] = (int) ($this->rawVocab[$word] ?? 0) + 1;
         }
     }
 
@@ -391,75 +388,75 @@ class Word2Vec implements Embedder
      */
     private function prepVocab() : void
     {
-        $drop_total = $drop_unique = $retain_total = 0;
-        $retain_words = [];
+        $dropTotal = $dropUnique = $retainTotal = 0;
+        $retainWords = [];
 
-        foreach ($this->raw_vocab as $word => $v) {
+        foreach ($this->rawVocab as $word => $v) {
             if ($v >= $this->minCount) {
-                $retain_words[] = $word;
-                $retain_total += $v;
+                $retainWords[] = $word;
+                $retainTotal += $v;
 
                 $this->vocab[$word] = ['count' => $v, 'index' => count($this->index2word), 'word' => $word];
                 $this->index2word[] = $word;
             } else {
-                $drop_unique += 1;
-                $drop_total += $v;
+                $dropUnique += 1;
+                $dropTotal += $v;
             }
         }
         
-        $original_unique_total = count($retain_words) + $drop_unique;
-        $retain_unique_pct = ((count($retain_words) * 100) / $original_unique_total);
+        $originalUniqueTotal = count($retainWords) + $dropUnique;
+        $retainUniquePct = ((count($retainWords) * 100) / $originalUniqueTotal);
 
-        $original_total = $retain_total + $drop_total;
-        $retain_pct = (($retain_total * 100) / $original_total);
+        $originalTotal = $retainTotal + $dropTotal;
+        $retainPct = (($retainTotal * 100) / $originalTotal);
 
-        $threshold_count = $this->thresholdCount($retain_total);
+        $thresholdCount = $this->thresholdCount($retainTotal);
 
-        $this->updateWordProbs($retain_words, $threshold_count);
+        $this->updateWordProbs($retainWords, $thresholdCount);
     }
 
     /**
      * Determine threshold word count based off of subsampling rate.
      *
-     * @param int $retain_total
-     * @return float $threshold_count
+     * @param int $retainTotal
+     * @return float $thresholdCount
      */
-    private function thresholdCount(int $retain_total) : float
+    private function thresholdCount(int $retainTotal) : float
     {
         if (!$this->sampleRate) {
-            $threshold_count = $retain_total;
+            $thresholdCount = $retainTotal;
         } elseif ($this->sampleRate < 1) {
-            $threshold_count = $this->sampleRate * $retain_total;
+            $thresholdCount = $this->sampleRate * $retainTotal;
         } else {
-            $threshold_count = ($this->sampleRate * (3 + sqrt(5)) / 2);
+            $thresholdCount = ($this->sampleRate * (3 + sqrt(5)) / 2);
         }
 
-        return $threshold_count;
+        return $thresholdCount;
     }
 
     /**
      * Assigns word probabilities, determined by subsampling rate, to each word in vocabulary.
      *
-     * @param string[] $retain_words
-     * @param float $threshold_count
+     * @param string[] $retainWords
+     * @param float $thresholdCount
      */
-    private function updateWordProbs(array $retain_words, float $threshold_count) : void
+    private function updateWordProbs(array $retainWords, float $thresholdCount) : void
     {
-        $downsample_total = $downsample_unique = 0;
+        $downsampleTotal = $downsampleUnique = 0;
 
-        foreach ($retain_words as $w) {
-            $v = $this->raw_vocab[$w];
-            $word_probability = (sqrt($v / $threshold_count) + 1) * ($threshold_count / $v);
+        foreach ($retainWords as $w) {
+            $v = $this->rawVocab[$w];
+            $wordProbability = (sqrt($v / $thresholdCount) + 1) * ($thresholdCount / $v);
 
-            if ($word_probability < 1) {
-                $downsample_unique += 1;
-                $downsample_total += $word_probability * $v;
+            if ($wordProbability < 1) {
+                $downsampleUnique += 1;
+                $downsampleTotal += $wordProbability * $v;
             } else {
-                $word_probability = 1;
-                $downsample_total += $v;
+                $wordProbability = 1;
+                $downsampleTotal += $v;
             }
 
-            $this->vocab[$w]['sample_int'] = round($word_probability * pow(2, 32));
+            $this->vocab[$w]['sample_int'] = round($wordProbability * pow(2, 32));
         }
     }
 
@@ -479,7 +476,7 @@ class Word2Vec implements Embedder
             $this->vocab[$word]['index'] = $index;
         }
 
-        $this->vocab_count = count($this->vocab);
+        $this->vocabCount = count($this->vocab);
     }
 
     /**
@@ -487,22 +484,22 @@ class Word2Vec implements Embedder
      */
     private function createCumTable() : void
     {
-        $ns_exponent = 0.75;
+        $nsExponent = 0.75;
         $domain = (pow(2, 31) - 1);
-        $train_words_pow = $cumulative = 0;
-        $cum_table = array_fill(0, $this->vocab_count, 0);
+        $trainWordsPow = $cumulative = 0;
+        $cumTable = array_fill(0, $this->vocabCount, 0);
 
-        foreach (range(0, ($this->vocab_count - 1)) as $word_index) {
-            $train_words_pow += pow($this->vocab[$this->index2word[$word_index]]['count'], $ns_exponent);
+        foreach (range(0, ($this->vocabCount - 1)) as $wordIndex) {
+            $trainWordsPow += pow($this->vocab[$this->index2word[$wordIndex]]['count'], $nsExponent);
         }
         
-        foreach (range(0, ($this->vocab_count - 1)) as $word_index) {
-            $cumulative += pow($this->vocab[$this->index2word[$word_index]]['count'], $ns_exponent);
-            $cum_table[$word_index] = (int) round(($cumulative / $train_words_pow) * $domain);
+        foreach (range(0, ($this->vocabCount - 1)) as $wordIndex) {
+            $cumulative += pow($this->vocab[$this->index2word[$wordIndex]]['count'], $nsExponent);
+            $cumTable[$wordIndex] = (int) round(($cumulative / $trainWordsPow) * $domain);
         }
 
-        $this->cum_table = $cum_table;
-        $this->endCumDigit = (int) end($cum_table);
+        $this->cumTable = $cumTable;
+        $this->endCumDigit = (int) end($cumTable);
     }
 
     /**
@@ -511,34 +508,34 @@ class Word2Vec implements Embedder
     private function createBinaryTree() : void
     {
         $heap = $this->buildHeap($this->vocab);
-        $max_depth = 0;
+        $maxDepth = 0;
         $stack = [[$heap[0], [], []]];
         
         while ($stack) {
-            $stack_item = array_pop($stack);
+            $stackItem = array_pop($stack);
             
-            if (empty($stack_item)) {
+            if (empty($stackItem)) {
                 break;
             }
 
-            $points = $stack_item[2];
-            $codes = $stack_item[1];
-            $node = $stack_item[0];
+            $points = $stackItem[2];
+            $codes = $stackItem[1];
+            $node = $stackItem[0];
 
-            if ($node['index'] < $this->vocab_count) {
+            if ($node['index'] < $this->vocabCount) {
                 $this->vocab[$node['word']]['code'] = Vector::quick($codes);
                 $this->vocab[$node['word']]['point'] = $points;
 
-                $max_depth = max(count($codes), $max_depth);
+                $maxDepth = max(count($codes), $maxDepth);
             } else {
-                $points[] = ($node['index'] - $this->vocab_count);
-                $code_left = $code_right = $codes;
+                $points[] = ($node['index'] - $this->vocabCount);
+                $codeLeft = $codeRight = $codes;
 
-                $code_left[] = 0;
-                $code_right[] = 1;
+                $codeLeft[] = 0;
+                $codeRight[] = 1;
 
-                $stack[] = [$node['left'], $code_left, $points];
-                $stack[] = [$node['right'], $code_right, $points];
+                $stack[] = [$node['left'], $codeLeft, $points];
+                $stack[] = [$node['right'], $codeRight, $points];
             }
         }
     }
@@ -553,18 +550,18 @@ class Word2Vec implements Embedder
     private function buildHeap(array $vocabulary) : array
     {
         $heap = new Heap($vocabulary);
-        $max_range = (count($vocabulary) - 2);
+        $maxRange = (count($vocabulary) - 2);
 
-        foreach (range(0, $max_range) as $i) {
-            $min_1 = $heap->heappop();
-            $min_2 = $heap->heappop();
+        foreach (range(0, $maxRange) as $i) {
+            $min1 = $heap->heappop();
+            $min2 = $heap->heappop();
 
-            if (!empty($min_1) && !empty($min_2)) {
+            if (!empty($min1) && !empty($min2)) {
                 $new_item = [
-                    'count' => ($min_1['count'] + $min_2['count']),
+                    'count' => ($min1['count'] + $min2['count']),
                     'index' => ($i + (count($vocabulary))),
-                    'left' => $min_1,
-                    'right' => $min_2
+                    'left' => $min1,
+                    'right' => $min2
                 ];
 
                 $heap->heappush($new_item);
@@ -580,13 +577,13 @@ class Word2Vec implements Embedder
      */
     private function prepareWeights() : void
     {
-        foreach (range(0, ($this->vocab_count - 1)) as $i) {
+        foreach (range(0, ($this->vocabCount - 1)) as $i) {
             $this->syn1[] = Vector::quick(array_fill(0, $this->dimensions, 0));
             $this->vectors[$i] = Vector::rand($this->dimensions)->subtractScalar(0.5)->divideScalar($this->dimensions);
         }
 
         $this->neu1e = Vector::quick(array_fill(0, $this->dimensions, 0));
-        $this->vectors_lockf = array_fill(0, $this->vocab_count, 1);
+        $this->vectorsLockf = array_fill(0, $this->vocabCount, 1);
     }
 
     /**
@@ -595,17 +592,17 @@ class Word2Vec implements Embedder
     private function train_epoch_sg() : void
     {
         foreach ($this->corpus as $sentence) {
-            $word_vocabs = $this->wordVocabs($sentence);
+            $wordVocabs = $this->wordVocabs($sentence);
 
-            foreach ($word_vocabs as $pos => $word) {
-                $subset = $this->sgSubset($pos, $word_vocabs);
+            foreach ($wordVocabs as $pos => $word) {
+                $subset = $this->sgSubset($pos, $wordVocabs);
 
                 foreach ($subset as $pos2 => $word2) {
                     if ($pos2 !== $pos) {
-                        $word_index = (string) $this->index2word[$word['index']];
-                        $context_index = $word2['index'];
+                        $wordIndex = (string) $this->index2word[$word['index']];
+                        $contextIndex = $word2['index'];
 
-                        $this->train_pair_sg($word_index, $context_index);
+                        $this->train_pair_sg($wordIndex, $contextIndex);
                     }
                 }
             }
@@ -616,73 +613,72 @@ class Word2Vec implements Embedder
      * Builds an array of Word Vocabs that exceed a random multiplier from the sentence for more accurate and faster training
      *
      * @param string[] $sentence
-     * @return array[] $word_vocabs
+     * @return array[] $wordVocabs
      */
     private function wordVocabs(array $sentence) : array
     {
-        $word_vocabs = [];
+        $wordVocabs = [];
         $rand = lcg_value();
-        //$rand = (rand() / getrandmax()));
 
         foreach ($sentence as $w) {
-            $vocab_item = $this->vocab[$w] ?? false;
+            $vocabItem = $this->vocab[$w] ?? false;
 
-            if (!empty($vocab_item) && $vocab_item['sample_int'] > ($rand * $this->rand_multiplier)) {
-                $word_vocabs[] = $vocab_item;
+            if (!empty($vocabItem) && $vocabItem['sample_int'] > ($rand * $this->randMultiplier)) {
+                $wordVocabs[] = $vocabItem;
             }
         }
 
-        return $word_vocabs;
+        return $wordVocabs;
     }
 
     /**
      * Builds an array from the word vocab in skip-gram sequence
      *
      * @param int $pos
-     * @param array[] $word_vocabs
+     * @param array[] $wordVocabs
      * @return array[]
      */
-    private function sgSubset(int $pos, array $word_vocabs) : array
+    private function sgSubset(int $pos, array $wordVocabs) : array
     {
-        $reduced_window = rand(0, ($this->window - 1));
-        $array_start = max(0, ($pos - $this->window + $reduced_window));
-        $array_end = $pos + $this->window + 1 - $reduced_window - $array_start;
+        $reducedWindow = rand(0, ($this->window - 1));
+        $arrayStart = max(0, ($pos - $this->window + $reducedWindow));
+        $arrayEnd = $pos + $this->window + 1 - $reducedWindow - $arrayStart;
 
-        return array_slice($word_vocabs, $array_start, $array_end, true);
+        return array_slice($wordVocabs, $arrayStart, $arrayEnd, true);
     }
 
     /**
      * Determining appropriate word pair training method and updating the word's vector weights.
      *
-     * @param string $word_index
-     * @param int $context_index
+     * @param string $wordIndex
+     * @param int $contextIndex
      */
-    private function train_pair_sg(string $word_index, int $context_index) : void
+    private function train_pair_sg(string $wordIndex, int $contextIndex) : void
     {
-        $predict_word = $this->vocab[$word_index];
-        $l1 = $this->vectors[$context_index];
-        $lock_factor = $this->vectors_lockf[$context_index];
-        $train_method = $this->train_method;
+        $predictWord = $this->vocab[$wordIndex];
+        $l1 = $this->vectors[$contextIndex];
+        $lockFactor = $this->vectorsLockf[$contextIndex];
+        $trainMethod = $this->trainMethod;
 
-        $neu1e = $this->$train_method($predict_word, $l1);
+        $neu1e = $this->$trainMethod($predictWord, $l1);
 
-        $this->vectors[$context_index] = $l1->addVector($neu1e->multiplyScalar($lock_factor));
+        $this->vectors[$contextIndex] = $l1->addVector($neu1e->multiplyScalar($lockFactor));
     }
 
     /**
      * Calculate the weight of the word sample using hierarchical softmax.
      *
-     * @param mixed[] $predict_word
+     * @param mixed[] $predictWord
      * @param \Tensor\Vector $l1
      * @return \Tensor\Vector
      */
-    private function train_pair_sg_hs(array $predict_word, Vector $l1) : Vector
+    private function train_pair_sg_hs(array $predictWord, Vector $l1) : Vector
     {
-        $word_indices = $predict_word['point'];
+        $word_indices = $predictWord['point'];
 
         $l2 = $this->layerMatrix($word_indices);
         $fa = $this->propagateHidden($l2, $l1);
-        $gb = $fa->addVector($predict_word['code'])->negate()->addScalar(1)->multiplyScalar($this->alpha);
+        $gb = $fa->addVector($predictWord['code'])->negate()->addScalar(1)->multiplyScalar($this->alpha);
 
         $this->learnHidden($word_indices, $gb, $l1);
 
@@ -692,34 +688,34 @@ class Word2Vec implements Embedder
     /**
      * Calculate & return new vector weight of word sample using negative sampling.
      *
-     * @param array[] $predict_word
+     * @param array[] $predictWord
      * @param \Tensor\Vector $l1
      * @return \Tensor\Vector
      */
-    private function train_pair_sg_neg(array $predict_word, Vector $l1) : Vector
+    private function train_pair_sg_neg(array $predictWord, Vector $l1) : Vector
     {
-        $word_indices = [$predict_word['index']];
+        $wordIndices = [$predictWord['index']];
 
-        while (count($word_indices) < 1 + 1) {
-            $temp = $this->cum_table;
-            $rand_int = rand(0, $this->endCumDigit);
-            $temp[] = $rand_int;
+        while (count($wordIndices) < 1 + 1) {
+            $temp = $this->cumTable;
+            $randInt = rand(0, $this->endCumDigit);
+            $temp[] = $randInt;
 
             sort($temp);
-            $w = array_search($rand_int, $temp);
+            $w = array_search($randInt, $temp);
 
-            if ($w !== $predict_word['index']) {
-                $word_indices[] = $w;
+            if ($w !== $predictWord['index']) {
+                $wordIndices[] = $w;
             }
 
             continue;
         }
         
-        $l2 = $this->layerMatrix($word_indices);
+        $l2 = $this->layerMatrix($wordIndices);
         $fa = $this->propagateHidden($l2, $l1);
-        $gb = $this->neg_labels->subtractVector($fa)->multiplyScalar($this->alpha);
+        $gb = $this->negLabels->subtractVector($fa)->multiplyScalar($this->alpha);
 
-        $this->learnHidden($word_indices, $gb, $l1);
+        $this->learnHidden($wordIndices, $gb, $l1);
 
         return $this->neu1e->addMatrix($gb->matmul($l2))->rowAsVector(0);
     }
@@ -727,14 +723,14 @@ class Word2Vec implements Embedder
     /**
      * Creating 2-d matrix from word indices.
      *
-     * @param mixed[] $word_indices
+     * @param mixed[] $wordIndices
      * @return \Tensor\Matrix
      */
-    private function layerMatrix(array $word_indices) : Matrix
+    private function layerMatrix(array $wordIndices) : Matrix
     {
         $l2a = [];
 
-        foreach ($word_indices as $index) {
+        foreach ($wordIndices as $index) {
             $l2a[] = $this->syn1[$index];
         }
 
@@ -744,16 +740,16 @@ class Word2Vec implements Embedder
     /**
      * Updating the hidden layer for given word index supplied the outer product of the word vector and error gradients.
      *
-     * @param mixed[] $word_indices
+     * @param mixed[] $wordIndices
      * @param \Tensor\Vector $g
      * @param \Tensor\Vector $l1
      */
-    private function learnHidden(array $word_indices, Vector $g, Vector $l1) : void
+    private function learnHidden(array $wordIndices, Vector $g, Vector $l1) : void
     {
         $c = $g->outer($l1);
         $count = 0;
 
-        foreach ($word_indices as $index) {
+        foreach ($wordIndices as $index) {
             $this->syn1[$index] = $this->syn1[$index]->addVector($c->rowAsVector($count));
             $count += 1;
         }
@@ -768,10 +764,10 @@ class Word2Vec implements Embedder
      */
     private function propagateHidden(Matrix $l2, Vector $l1) : Vector
     {
-        $prod_term = $l1->matmul($l2->transpose());
+        $prodTerm = $l1->matmul($l2->transpose());
         $sigmoid = new Sigmoid();
 
-        return $sigmoid->compute($prod_term)->rowAsVector(0);
+        return $sigmoid->compute($prodTerm)->rowAsVector(0);
     }
 
     /**
@@ -779,13 +775,13 @@ class Word2Vec implements Embedder
      */
     private function generateL2Norm() : void
     {
-        $l2_norm = [];
+        $l2Norm = [];
 
         foreach ($this->vectors as $vector) {
-            $l2_norm[] = $vector->divideScalar($vector->L2Norm());
+            $l2Norm[] = $vector->divideScalar($vector->L2Norm());
         }
 
-        $this->vectors_norm = $l2_norm;
+        $this->vectorsNorm = $l2Norm;
     }
 
     /**
@@ -799,12 +795,6 @@ class Word2Vec implements Embedder
     {
         DatasetIsNotEmpty::check($dataset);
         SamplesAreCompatibleWithEmbedder::check($dataset, $this);
-
-        if ($this->logger) {
-            $this->logger->info('Embedder init ' . Params::stringify($this->params()));
-
-            $this->logger->info('Computing high-dimensional affinities');
-        }
 
         $samples = $dataset->samples();
         $embeddedDataset = [];
@@ -835,40 +825,40 @@ class Word2Vec implements Embedder
      */
     public function most_similar(array $positive, array $negative = [], $top = 20) : array
     {
-        $positive_array = $negative_array = $all_words = $means = [];
+        $positiveArray = $negativeArray = $allWords = $means = [];
 
         foreach ($positive as $word) {
-            $positive_array[$word] = 1.0;
+            $positiveArray[$word] = 1.0;
         }
         
         foreach ($negative as $word) {
-            $negative_array[$word] = -1.0;
+            $negativeArray[$word] = -1.0;
         }
 
-        $word_array = array_merge($positive_array, $negative_array);
+        $wordArray = array_merge($positiveArray, $negativeArray);
 
-        foreach ($word_array as $word => $weight) {
+        foreach ($wordArray as $word => $weight) {
             $wordEmbedding = $this->wordVec($word);
 
             if ($wordEmbedding instanceof Vector) {
                 $means[] = $wordEmbedding->multiplyScalar($weight);
-                $all_words[] = $this->vocab[$word]['index'];
+                $allWords[] = $this->vocab[$word]['index'];
             }
         }
 
-        if (empty($all_words)) {
+        if (empty($allWords)) {
             throw new InvalidArgumentException('Positive words were not found in vocab.');
         }
 
         $mean = Matrix::stack($means)->transpose()->mean();
-        $l2 = Matrix::stack($this->vectors_norm);
+        $l2 = Matrix::stack($this->vectorsNorm);
         $dists = $mean->transpose()->matmul($l2->transpose())->asArray()[0];
 
         arsort($dists, 1);
 
         $result = [];
         foreach ($dists as $index => $weight) {
-            if (!in_array($index, $all_words)) {
+            if (!in_array($index, $allWords)) {
                 $result[$this->index2word[$index]] = $weight;
             }
         }
@@ -892,7 +882,7 @@ class Word2Vec implements Embedder
         }
 
         if ($use_norm) {
-            $result = $this->vectors_norm[$this->vocab[$word]['index']];
+            $result = $this->vectorsNorm[$this->vocab[$word]['index']];
         } else {
             $result = $this->vectors[$this->vocab[$word]['index']];
         }
@@ -912,26 +902,10 @@ class Word2Vec implements Embedder
         $wordEmbedding = $this->wordVec($word);
 
         if (!$wordEmbedding) {
-            $wordEmbedding = Vector::quick(array_fill(0, $this->dimensions, 0));
+            $wordEmbedding = Vector::zeros(0, $this->dimensions);
         }
 
         return $wordEmbedding;
     }
 
-    /**
-     * Determining if layer is acceptable.
-     *
-     * @param string $layer
-     * @return bool
-     */
-    private function acceptedLayer(string $layer) : bool
-    {
-        $accepted_layers = ['hs', 'neg'];
-
-        if (!in_array($layer, $accepted_layers)) {
-            return false;
-        }
-
-        return true;
-    }
 }
