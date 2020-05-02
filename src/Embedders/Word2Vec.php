@@ -120,14 +120,7 @@ class Word2Vec implements Embedder
      *
      * @var string
      */
-    protected $trainMethod;
-
-    /**
-     * Presetting random multiplier used to validate word probabilities in sub sampling.
-     *
-     * @var int
-     */
-    protected $randMultiplier = 4294967296;
+    protected $trainMethod;    
 
     /**
      * The layer of the network, accepts 'neg' or 'hs'.
@@ -187,6 +180,34 @@ class Word2Vec implements Embedder
     protected $vocabCount;
 
     /**
+     * Sigmoid activation function.
+     *
+     * @var \Rubix\ML\NeuralNet\ActivationFunctions\Sigmoid
+     */
+    protected $sigmoid;    
+
+    /**
+     * Presetting random multiplier used to validate word probabilities in sub sampling.
+     *
+     * @var int
+     */
+    protected const RAND_MULTIPLIER = 4294967296; 
+
+    /**
+     * The minimum allowed alpha while training.
+     *
+     * @var float
+     */
+    protected const MIN_ALPHA = 0.0001;
+    
+    /**
+     * The negative sampling exponent.
+     *
+     * @var float
+     */
+    protected const NS_EXPONENT = 0.75;    
+
+    /**
      * @param string $layer
      * @param int $window
      * @param int $dimensions
@@ -241,6 +262,7 @@ class Word2Vec implements Embedder
         $this->epochs = $epochs;
         $this->minCount = $minCount;
         $this->negLabels = Vector::quick([1, 0]);
+        $this->sigmoid = new Sigmoid();
     }
 
     /**
@@ -296,12 +318,11 @@ class Word2Vec implements Embedder
 
         $this->preprocess($sentences);
         $this->prepareWeights();
-
-        $minAlpha = 0.0001;
+        
         $startAlpha = $this->alpha;
 
         for ($i = 0; $i < $this->epochs; ++$i) {
-            $this->alpha = $startAlpha - (($startAlpha - $minAlpha) * ($i) / $this->epochs);
+            $this->alpha = $startAlpha - (($startAlpha - self::MIN_ALPHA) * ($i) / $this->epochs);
 
             $this->train_epoch_sg();
         }
@@ -377,7 +398,7 @@ class Word2Vec implements Embedder
      */
     private function scanVocab(array $words) : void
     {
-        foreach ($words as $i => $word) {
+        foreach ($words as $word) {
             $this->rawVocab[$word] = (int) ($this->rawVocab[$word] ?? 0) + 1;
         }
     }
@@ -399,7 +420,7 @@ class Word2Vec implements Embedder
                 $this->vocab[$word] = ['count' => $v, 'index' => count($this->index2word), 'word' => $word];
                 $this->index2word[] = $word;
             } else {
-                $dropUnique += 1;
+                ++ $dropUnique;
                 $dropTotal += $v;
             }
         }
@@ -449,14 +470,14 @@ class Word2Vec implements Embedder
             $wordProbability = (sqrt($v / $thresholdCount) + 1) * ($thresholdCount / $v);
 
             if ($wordProbability < 1) {
-                $downsampleUnique += 1;
+                ++ $downsampleUnique;
                 $downsampleTotal += $wordProbability * $v;
             } else {
                 $wordProbability = 1;
                 $downsampleTotal += $v;
             }
 
-            $this->vocab[$w]['sample_int'] = round($wordProbability * pow(2, 32));
+            $this->vocab[$w]['sample_int'] = round($wordProbability * (2 ** 32));
         }
     }
 
@@ -484,17 +505,16 @@ class Word2Vec implements Embedder
      */
     private function createCumTable() : void
     {
-        $nsExponent = 0.75;
-        $domain = (pow(2, 31) - 1);
+        $domain = ((2 ** 31) -1);
         $trainWordsPow = $cumulative = 0;
         $cumTable = array_fill(0, $this->vocabCount, 0);
 
         foreach (range(0, ($this->vocabCount - 1)) as $wordIndex) {
-            $trainWordsPow += pow($this->vocab[$this->index2word[$wordIndex]]['count'], $nsExponent);
+            $trainWordsPow += ($this->vocab[$this->index2word[$wordIndex]]['count'] ** self::NS_EXPONENT);
         }
         
         foreach (range(0, ($this->vocabCount - 1)) as $wordIndex) {
-            $cumulative += pow($this->vocab[$this->index2word[$wordIndex]]['count'], $nsExponent);
+            $cumulative += ($this->vocab[$this->index2word[$wordIndex]]['count'] ** self::NS_EXPONENT);
             $cumTable[$wordIndex] = (int) round(($cumulative / $trainWordsPow) * $domain);
         }
 
@@ -582,6 +602,7 @@ class Word2Vec implements Embedder
             $this->vectors[$i] = Vector::rand($this->dimensions)->subtractScalar(0.5)->divideScalar($this->dimensions);
         }
 
+        #$this->neu1e = Vector::zeros(0, $this->dimensions);
         $this->neu1e = Vector::quick(array_fill(0, $this->dimensions, 0));
         $this->vectorsLockf = array_fill(0, $this->vocabCount, 1);
     }
@@ -620,10 +641,10 @@ class Word2Vec implements Embedder
         $wordVocabs = [];
         $rand = lcg_value();
 
-        foreach ($sentence as $w) {
-            $vocabItem = $this->vocab[$w] ?? false;
+        foreach ($sentence as $word) {
+            $vocabItem = $this->vocab[$word] ?? false;
 
-            if (!empty($vocabItem) && $vocabItem['sample_int'] > ($rand * $this->randMultiplier)) {
+            if (!empty($vocabItem) && $vocabItem['sample_int'] > ($rand * self::RAND_MULTIPLIER)) {
                 $wordVocabs[] = $vocabItem;
             }
         }
@@ -751,7 +772,7 @@ class Word2Vec implements Embedder
 
         foreach ($wordIndices as $index) {
             $this->syn1[$index] = $this->syn1[$index]->addVector($c->rowAsVector($count));
-            $count += 1;
+            ++ $count;
         }
     }
 
@@ -765,9 +786,8 @@ class Word2Vec implements Embedder
     private function propagateHidden(Matrix $l2, Vector $l1) : Vector
     {
         $prodTerm = $l1->matmul($l2->transpose());
-        $sigmoid = new Sigmoid();
 
-        return $sigmoid->compute($prodTerm)->rowAsVector(0);
+        return $this->sigmoid->compute($prodTerm)->rowAsVector(0);
     }
 
     /**
@@ -799,7 +819,7 @@ class Word2Vec implements Embedder
         $samples = $dataset->samples();
         $embeddedDataset = [];
 
-        foreach ($samples as $i => $featureSet) {
+        foreach ($samples as $featureSet) {
             foreach ($featureSet as $i2 => $sentence) {
                 $preppedSentence = $this->prepSentence($sentence);
 
