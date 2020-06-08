@@ -61,7 +61,7 @@ class GowerTest extends TestCase
         yield [['toast', 1., 0.5, NAN], ['pretzels', 1., 0.2, 0.1], 0.43333333333333335];
 
         yield [[0., 1., 0.5, 'ham'], [0.1, 0.9, 0.4, 'ham'], 0.07499999999999998];
-        
+
         yield [[1, NAN, 1], [1, NAN, 1], 0.0];
     }
 }

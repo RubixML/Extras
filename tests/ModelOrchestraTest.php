@@ -27,7 +27,9 @@ use RuntimeException;
 class ModelOrchestraTest extends TestCase
 {
     protected const TRAIN_SIZE = 400;
+
     protected const TEST_SIZE = 10;
+
     protected const MIN_SCORE = 0.9;
 
     protected const RANDOM_SEED = 0;
@@ -81,7 +83,7 @@ class ModelOrchestraTest extends TestCase
         $this->assertInstanceOf(Verbose::class, $this->estimator);
         $this->assertInstanceOf(Estimator::class, $this->estimator);
     }
-    
+
     /**
      * @test
      */
@@ -119,7 +121,7 @@ class ModelOrchestraTest extends TestCase
 
         $this->assertEquals($expected, $this->estimator->params());
     }
-    
+
     /**
      * @test
      */
@@ -141,7 +143,7 @@ class ModelOrchestraTest extends TestCase
 
         $this->assertGreaterThanOrEqual(self::MIN_SCORE, $score);
     }
-    
+
     /**
      * @test
      */
@@ -151,7 +153,7 @@ class ModelOrchestraTest extends TestCase
 
         $this->estimator->train(Unlabeled::quick([['bad']]));
     }
-    
+
     /**
      * @test
      */
