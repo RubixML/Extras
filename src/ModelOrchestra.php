@@ -67,44 +67,6 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
     protected $compatibility;
 
     /**
-     * Train a learner with a dataset and return it.
-     *
-     * @param \Rubix\ML\Learner $estimator
-     * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @return \Rubix\ML\Learner
-     */
-    public static function _train(Learner $estimator, Dataset $dataset) : Learner
-    {
-        $estimator->train($dataset);
-
-        return $estimator;
-    }
-
-    /**
-     * Return the predictions from an estimator.
-     *
-     * @param \Rubix\ML\Estimator $estimator
-     * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @return mixed[]
-     */
-    public static function _predict(Estimator $estimator, Dataset $dataset) : array
-    {
-        return $estimator->predict($dataset);
-    }
-
-    /**
-     * Return the predictions from an estimator.
-     *
-     * @param \Rubix\ML\Probabilistic $estimator
-     * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @return array[]
-     */
-    public static function _proba(Probabilistic $estimator, Dataset $dataset) : array
-    {
-        return $estimator->proba($dataset);
-    }
-
-    /**
      * @param \Rubix\ML\Learner[] $members
      * @param \Rubix\ML\Learner|null $conductor
      * @param float $ratio

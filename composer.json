@@ -16,7 +16,7 @@
     ],
     "require": {
         "php": ">=7.2",
-        "rubix/ml": "^0.1.0-rc2",
+        "rubix/ml": "^0.1.0-rc3",
         "rubix/tensor": "^2.0.4",
         "wamania/php-stemmer": "^2.0"
     },

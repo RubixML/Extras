@@ -1,4 +1,4 @@
-<span style="float:right;"><a href="https://github.com/RubixML/RubixML/blob/master/src/Kernels/Distance/Gower.php">[source]</a></span>
+<span style="float:right;"><a href="https://github.com/RubixML/Extras/blob/master/src/Kernels/Distance/Gower.php">[source]</a></span>
 
 # Gower
 A robust distance kernel that measures a mix of categorical and continuous data types while handling NaN values. When comparing continuous data, the Gower metric is equivalent to the normalized [Manhattan](manhattan.md) distance and when comparing categorical data it is equivalent to the [Hamming](hamming.md) distance.
