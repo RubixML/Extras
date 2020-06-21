@@ -170,10 +170,11 @@ class Heap
 
         $maxRange = (($n / 2) - 1);
 
-        foreach (array_reverse(range(0, $maxRange)) as $i) {
+        for ($i = $maxRange; $i >= 0; --$i) {
             $this->heap = $this->siftup($this->heap, ((int) $i));
-        }
-
+        }        
+        
         return $this->heap;
     }
+    
 }

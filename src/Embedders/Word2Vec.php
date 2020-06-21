@@ -78,7 +78,7 @@ class Word2Vec implements Embedder
      *
      * @var \Tensor\Vector
      */
-    protected $neu1e;
+    protected $error;
 
     /**
      * The lock factors for each word in the context.
@@ -509,13 +509,13 @@ class Word2Vec implements Embedder
         $trainWordsPow = $cumulative = 0;
         $cumTable = array_fill(0, $this->vocabCount, 0);
 
-        foreach (range(0, ($this->vocabCount - 1)) as $wordIndex) {
-            $trainWordsPow += ($this->vocab[$this->index2word[$wordIndex]]['count'] ** self::NS_EXPONENT);
+        for($i=0; $i < $this->vocabCount; ++$i) {
+            $trainWordsPow += ($this->vocab[$this->index2word[$i]]['count'] ** self::NS_EXPONENT);
         }
         
-        foreach (range(0, ($this->vocabCount - 1)) as $wordIndex) {
-            $cumulative += ($this->vocab[$this->index2word[$wordIndex]]['count'] ** self::NS_EXPONENT);
-            $cumTable[$wordIndex] = (int) round(($cumulative / $trainWordsPow) * $domain);
+        for($i=0; $i < $this->vocabCount; ++$i) {
+            $cumulative += ($this->vocab[$this->index2word[$i]]['count'] ** self::NS_EXPONENT);
+            $cumTable[$i] = (int) round(($cumulative / $trainWordsPow) * $domain);            
         }
 
         $this->cumTable = $cumTable;
@@ -557,7 +557,7 @@ class Word2Vec implements Embedder
                 $stack[] = [$node['left'], $codeLeft, $points];
                 $stack[] = [$node['right'], $codeRight, $points];
             }
-        }
+        }        
     }
 
     /**
@@ -571,8 +571,8 @@ class Word2Vec implements Embedder
     {
         $heap = new Heap($vocabulary);
         $maxRange = (count($vocabulary) - 2);
-
-        foreach (range(0, $maxRange) as $i) {
+        
+        for($i=0; $i<=$maxRange; ++$i) {
             $min1 = $heap->heappop();
             $min2 = $heap->heappop();
 
@@ -593,17 +593,16 @@ class Word2Vec implements Embedder
 
     /**
      * Assigning a random vector for each word in the corpus, instead of creating a massive random matrix for RAM purposes.
-     * Creating zeroed vectors for syn and neu1e.
+     * Creating zeroed vectors for syn and error.
      */
     private function prepareWeights() : void
     {
-        foreach (range(0, ($this->vocabCount - 1)) as $i) {
-            $this->syn1[] = Vector::quick(array_fill(0, $this->dimensions, 0));
+        for($i=0; $i < $this->vocabCount; ++$i) {
+            $this->syn1[] = Vector::zeros($this->dimensions);
             $this->vectors[$i] = Vector::rand($this->dimensions)->subtractScalar(0.5)->divideScalar($this->dimensions);
         }
 
-        #$this->neu1e = Vector::zeros(0, $this->dimensions);
-        $this->neu1e = Vector::quick(array_fill(0, $this->dimensions, 0));
+        $this->error = Vector::zeros($this->dimensions);
         $this->vectorsLockf = array_fill(0, $this->vocabCount, 1);
     }
 
@@ -639,7 +638,7 @@ class Word2Vec implements Embedder
     private function wordVocabs(array $sentence) : array
     {
         $wordVocabs = [];
-        $rand = lcg_value();
+        $rand = (rand() / getrandmax());
 
         foreach ($sentence as $word) {
             $vocabItem = $this->vocab[$word] ?? false;
@@ -681,9 +680,9 @@ class Word2Vec implements Embedder
         $lockFactor = $this->vectorsLockf[$contextIndex];
         $trainMethod = $this->trainMethod;
 
-        $neu1e = $this->$trainMethod($predictWord, $l1);
+        $error = $this->$trainMethod($predictWord, $l1);
 
-        $this->vectors[$contextIndex] = $l1->addVector($neu1e->multiplyScalar($lockFactor));
+        $this->vectors[$contextIndex] = $l1->addVector($error->multiplyScalar($lockFactor));
     }
 
     /**
@@ -703,7 +702,7 @@ class Word2Vec implements Embedder
 
         $this->learnHidden($word_indices, $gb, $l1);
 
-        return $this->neu1e->addMatrix($gb->matmul($l2))->rowAsVector(0);
+        return $this->error->addMatrix($gb->matmul($l2))->rowAsVector(0);
     }
 
     /**
@@ -738,7 +737,7 @@ class Word2Vec implements Embedder
 
         $this->learnHidden($wordIndices, $gb, $l1);
 
-        return $this->neu1e->addMatrix($gb->matmul($l2))->rowAsVector(0);
+        return $this->error->addMatrix($gb->matmul($l2))->rowAsVector(0);
     }
 
     /**
@@ -922,7 +921,7 @@ class Word2Vec implements Embedder
         $wordEmbedding = $this->wordVec($word);
 
         if (!$wordEmbedding) {
-            $wordEmbedding = Vector::zeros(0, $this->dimensions);
+            $wordEmbedding = Vector::zeros($this->dimensions);
         }
 
         return $wordEmbedding;
