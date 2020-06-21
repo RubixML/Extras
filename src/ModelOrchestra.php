@@ -8,8 +8,11 @@ use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\Regressors\Ridge;
 use Rubix\ML\Datasets\Unlabeled;
 use Rubix\ML\Other\Helpers\Params;
+use Rubix\ML\Backends\Tasks\Proba;
+use Rubix\ML\Backends\Tasks\Predict;
 use Rubix\ML\Other\Traits\LoggerAware;
 use Rubix\ML\Other\Traits\PredictsSingle;
+use Rubix\ML\Backends\Tasks\TrainLearner;
 use Rubix\ML\Other\Traits\Multiprocessing;
 use Rubix\ML\Classifiers\SoftmaxClassifier;
 use Rubix\ML\Specifications\DatasetIsNotEmpty;
@@ -255,10 +258,7 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
 
         foreach ($this->members as $estimator) {
             $this->backend->enqueue(
-                new Deferred(
-                    [self::class, '_train'],
-                    [$estimator, $left]
-                ),
+                new TrainLearner($estimator, $left),
                 [$this, 'afterTrain']
             );
         }
@@ -297,6 +297,25 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
     }
 
     /**
+     * The callback that executes after the training task.
+     *
+     * @param \Rubix\ML\Learner $estimator
+     * @throws \RuntimeException
+     */
+    public function afterTrain(Learner $estimator) : void
+    {
+        if (!$estimator->trained()) {
+            throw new RuntimeException('There was a problem training '
+                . Params::shortName(get_class($estimator)) . '.');
+        }
+
+        if ($this->logger) {
+            $this->logger->info(Params::shortName(get_class($estimator))
+                . ' finished training');
+        }
+    }
+
+    /**
      * Extract features from the ensemble members.
      *
      * @param \Rubix\ML\Datasets\Dataset $dataset
@@ -325,10 +344,9 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
         $this->backend->flush();
 
         foreach ($this->members as $estimator) {
-            $this->backend->enqueue(new Deferred(
-                [self::class, '_proba'],
-                [$estimator, $dataset]
-            ));
+            if ($estimator instanceof Probabilistic) {
+                $this->backend->enqueue(new Proba($estimator, $dataset));
+            }
         }
 
         $aggregate = array_transpose($this->backend->process());
@@ -353,71 +371,9 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
         $this->backend->flush();
 
         foreach ($this->members as $estimator) {
-            $this->backend->enqueue(new Deferred(
-                [self::class, '_predict'],
-                [$estimator, $dataset]
-            ));
+            $this->backend->enqueue(new Predict($estimator, $dataset));
         }
 
-        $samples = array_transpose($this->backend->process());
-
-        return $samples;
-    }
-
-    /**
-     * Train a learner with a dataset and return it.
-     *
-     * @param \Rubix\ML\Learner $estimator
-     * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @return \Rubix\ML\Learner
-     */
-    public static function _train(Learner $estimator, Dataset $dataset) : Learner
-    {
-        $estimator->train($dataset);
-
-        return $estimator;
-    }
-
-    /**
-     * The callback that executes after the training task.
-     *
-     * @param \Rubix\ML\Learner $estimator
-     * @throws \RuntimeException
-     */
-    public function afterTrain(Learner $estimator) : void
-    {
-        if (!$estimator->trained()) {
-            throw new RuntimeException('There was a problem training '
-                . Params::shortName(get_class($estimator)) . '.');
-        }
-
-        if ($this->logger) {
-            $this->logger->info(Params::shortName(get_class($estimator))
-                . ' finished training');
-        }
-    }
-
-    /**
-     * Return the predictions from an estimator.
-     *
-     * @param \Rubix\ML\Estimator $estimator
-     * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @return mixed[]
-     */
-    public static function _predict(Estimator $estimator, Dataset $dataset) : array
-    {
-        return $estimator->predict($dataset);
-    }
-
-    /**
-     * Return the predictions from an estimator.
-     *
-     * @param \Rubix\ML\Probabilistic $estimator
-     * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @return array[]
-     */
-    public static function _proba(Probabilistic $estimator, Dataset $dataset) : array
-    {
-        return $estimator->proba($dataset);
+        return array_transpose($this->backend->process());
     }
 }

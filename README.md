@@ -1,5 +1,5 @@
 # Rubix ML Extras
-Experimental features for the Rubix ML library.
+Experimental features for the Rubix ML library. The code here can see major changes or even removal. If/when features reach 1- sufficient maturity/stability and 2- sufficient community interest, they will be moved to the main package.
 
 ## Installation
 Install into your project using [Composer](https://getcomposer.org/):

@@ -16,7 +16,7 @@ class WordStemmerTest extends TestCase
      * @var \Rubix\ML\Other\Tokenizers\Word
      */
     protected $tokenizer;
-    
+
     /**
      * @before
      */
@@ -24,7 +24,7 @@ class WordStemmerTest extends TestCase
     {
         $this->tokenizer = new WordStemmer('english');
     }
-    
+
     /**
      * @test
      */
@@ -33,7 +33,7 @@ class WordStemmerTest extends TestCase
         $this->assertInstanceOf(WordStemmer::class, $this->tokenizer);
         $this->assertInstanceOf(Tokenizer::class, $this->tokenizer);
     }
-    
+
     /**
      * @test
      */

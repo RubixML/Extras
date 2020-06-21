@@ -111,8 +111,8 @@ class DeltaTfIdfTransformer implements Elastic
     public function fit(Dataset $dataset) : void
     {
         if (!$dataset instanceof Labeled) {
-            throw new InvalidArgumentException('This transformer requires a'
-                . ' labeled training set.');
+            throw new InvalidArgumentException('This transformer requires'
+                . ' a Labeled dataset.');
         }
 
         $classes = $dataset->possibleOutcomes();

@@ -16,13 +16,13 @@
     ],
     "require": {
         "php": ">=7.2",
-        "rubix/ml": "^0.1.0-rc2",
+        "rubix/ml": "^0.1.0-rc3",
         "rubix/tensor": "^2.0.4",
         "wamania/php-stemmer": "^2.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "2.16.*",
-        "phpbench/phpbench": "0.16.*",
+        "phpbench/phpbench": "0.17.*",
         "phpstan/phpstan": "0.12.*",
         "phpstan/phpstan-phpunit": "0.12.*",
         "phpunit/phpunit": "8.5.*"
