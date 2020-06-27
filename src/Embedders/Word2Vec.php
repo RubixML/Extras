@@ -7,11 +7,12 @@ use Rubix\ML\Datasets\Dataset;
 use Rubix\ML\Graph\Trees\Heap;
 use Rubix\ML\NeuralNet\ActivationFunctions\Sigmoid;
 use Rubix\ML\Specifications\DatasetIsNotEmpty;
-use Rubix\ML\Specifications\SamplesAreCompatibleWithEmbedder;
-use Rubix\ML\Other\Helpers\Params;
+use Rubix\ML\Embedders\Embedder;
+use Rubix\ML\Transformers\Stateful;
 use Tensor\Matrix;
 use Tensor\Vector;
 use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * Word2Vec
@@ -28,7 +29,7 @@ use InvalidArgumentException;
  * @package     RubixML
  * @author      Rich Davis
  */
-class Word2Vec implements Embedder
+class Word2Vec implements Embedder, Stateful
 {
 
     /**
@@ -300,7 +301,7 @@ class Word2Vec implements Embedder
      *
      * @return bool
      */
-    public function trained() : bool
+    public function fitted() : bool
     {
         return !empty($this->vectors);
     }
@@ -310,7 +311,7 @@ class Word2Vec implements Embedder
      * @param \Rubix\ML\Datasets\Dataset $dataset
      * @throws \InvalidArgumentException
      */
-    public function train(Dataset $dataset) : void
+    public function fit(Dataset $dataset) : void
     {
         DatasetIsNotEmpty::check($dataset);
 
@@ -324,7 +325,7 @@ class Word2Vec implements Embedder
         for ($i = 0; $i < $this->epochs; ++$i) {
             $this->alpha = $startAlpha - (($startAlpha - self::MIN_ALPHA) * ($i) / $this->epochs);
 
-            $this->train_epoch_sg();
+            $this->trainEpochSg();
         }
 
         $this->generateL2Norm();
@@ -346,11 +347,11 @@ class Word2Vec implements Embedder
         switch ($this->layer) {
             case 'hs':
                 $this->createBinaryTree();
-                $this->trainMethod = 'train_pair_sg_hs';
+                $this->trainMethod = 'trainPairSgHS';
                 break;
             case 'neg':
                 $this->createCumTable();
-                $this->trainMethod = 'train_pair_sg_neg';
+                $this->trainMethod = 'trainPairSgNeg';
                 break;
         }
     }
@@ -609,7 +610,7 @@ class Word2Vec implements Embedder
     /**
      * Training one epoch from the corpus and updating all respective word vectors.
      */
-    private function train_epoch_sg() : void
+    private function trainEpochSg() : void
     {
         foreach ($this->corpus as $sentence) {
             $wordVocabs = $this->wordVocabs($sentence);
@@ -622,7 +623,7 @@ class Word2Vec implements Embedder
                         $wordIndex = (string) $this->index2word[$word['index']];
                         $contextIndex = $word2['index'];
 
-                        $this->train_pair_sg($wordIndex, $contextIndex);
+                        $this->trainPairSg($wordIndex, $contextIndex);
                     }
                 }
             }
@@ -673,7 +674,7 @@ class Word2Vec implements Embedder
      * @param string $wordIndex
      * @param int $contextIndex
      */
-    private function train_pair_sg(string $wordIndex, int $contextIndex) : void
+    private function trainPairSg(string $wordIndex, int $contextIndex) : void
     {
         $predictWord = $this->vocab[$wordIndex];
         $l1 = $this->vectors[$contextIndex];
@@ -692,7 +693,7 @@ class Word2Vec implements Embedder
      * @param \Tensor\Vector $l1
      * @return \Tensor\Vector
      */
-    private function train_pair_sg_hs(array $predictWord, Vector $l1) : Vector
+    private function trainPairSgHS(array $predictWord, Vector $l1) : Vector
     {
         $word_indices = $predictWord['point'];
 
@@ -712,7 +713,7 @@ class Word2Vec implements Embedder
      * @param \Tensor\Vector $l1
      * @return \Tensor\Vector
      */
-    private function train_pair_sg_neg(array $predictWord, Vector $l1) : Vector
+    private function trainPairSgNeg(array $predictWord, Vector $l1) : Vector
     {
         $wordIndices = [$predictWord['index']];
 
@@ -806,16 +807,15 @@ class Word2Vec implements Embedder
     /**
      * Embed a high dimensional dataset into a lower dimensional one.
      *
-     * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @throws \InvalidArgumentException
-     * @return array[] $embeddedDataset
+     * @param array[] $samples
+     * @throws \RuntimeException
      */
-    public function embed(Dataset $dataset) : array
+    public function transform(array &$samples) : void
     {
-        DatasetIsNotEmpty::check($dataset);
-        SamplesAreCompatibleWithEmbedder::check($dataset, $this);
+        if (!$this->vectorsNorm) {
+            throw new RuntimeException('Transformer has not been fitted.');
+        }        
 
-        $samples = $dataset->samples();
         $embeddedDataset = [];
 
         foreach ($samples as $featureSet) {
@@ -831,7 +831,7 @@ class Word2Vec implements Embedder
             }
         }
 
-        return $embeddedDataset;
+        #return $embeddedDataset;
     }
 
     /**
@@ -842,7 +842,7 @@ class Word2Vec implements Embedder
      * @param int $top
      * @return string[] $result
      */
-    public function most_similar(array $positive, array $negative = [], $top = 20) : array
+    public function mostSimilar(array $positive, array $negative = [], $top = 20) : array
     {
         $positiveArray = $negativeArray = $allWords = $means = [];
 
