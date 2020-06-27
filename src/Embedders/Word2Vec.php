@@ -351,7 +351,11 @@ class Word2Vec implements Embedder, Stateful
                     $embeddings[] = $this->embedWord($word);
                 }
 
-                $sample[$i2] = Matrix::stack($embeddings)->transpose()->mean();
+                unset($sample[$i2]);
+            }
+
+            if (isset($embeddings)) {
+                $sample = Matrix::stack($embeddings)->transpose()->mean()->asArray();
             }
         }
     }
