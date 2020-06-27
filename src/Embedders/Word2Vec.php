@@ -342,10 +342,8 @@ class Word2Vec implements Embedder, Stateful
             throw new RuntimeException('Transformer has not been fitted.');
         }
 
-        $embeddedDataset = [];
-
-        foreach ($samples as $featureSet) {
-            foreach ($featureSet as $i2 => $sentence) {
+        foreach ($samples as &$sample) {
+            foreach ($sample as $i2 => $sentence) {
                 $preppedSentence = $this->prepSentence($sentence);
 
                 $embeddings = [];
@@ -353,7 +351,7 @@ class Word2Vec implements Embedder, Stateful
                     $embeddings[] = $this->embedWord($word);
                 }
 
-                $embeddedDataset[][$i2] = Matrix::stack($embeddings)->transpose()->mean();
+                $sample[$i2] = Matrix::stack($embeddings)->transpose()->mean();
             }
         }
     }
