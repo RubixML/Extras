@@ -7,7 +7,6 @@ use Rubix\ML\Datasets\Dataset;
 use Rubix\ML\Graph\Trees\Heap;
 use Rubix\ML\NeuralNet\ActivationFunctions\Sigmoid;
 use Rubix\ML\Specifications\DatasetIsNotEmpty;
-use Rubix\ML\Embedders\Embedder;
 use Rubix\ML\Transformers\Stateful;
 use Tensor\Matrix;
 use Tensor\Vector;
@@ -31,6 +30,26 @@ use RuntimeException;
  */
 class Word2Vec implements Embedder, Stateful
 {
+    /**
+     * Presetting random multiplier used to validate word probabilities in sub sampling.
+     *
+     * @var int
+     */
+    protected const RAND_MULTIPLIER = 4294967296;
+
+    /**
+     * The minimum allowed alpha while training.
+     *
+     * @var float
+     */
+    protected const MIN_ALPHA = 0.0001;
+
+    /**
+     * The negative sampling exponent.
+     *
+     * @var float
+     */
+    protected const NS_EXPONENT = 0.75;
 
     /**
      * An array of sanitized and exploded sentences.
@@ -121,7 +140,7 @@ class Word2Vec implements Embedder, Stateful
      *
      * @var string
      */
-    protected $trainMethod;    
+    protected $trainMethod;
 
     /**
      * The layer of the network, accepts 'neg' or 'hs'.
@@ -185,28 +204,7 @@ class Word2Vec implements Embedder, Stateful
      *
      * @var \Rubix\ML\NeuralNet\ActivationFunctions\Sigmoid
      */
-    protected $sigmoid;    
-
-    /**
-     * Presetting random multiplier used to validate word probabilities in sub sampling.
-     *
-     * @var int
-     */
-    protected const RAND_MULTIPLIER = 4294967296; 
-
-    /**
-     * The minimum allowed alpha while training.
-     *
-     * @var float
-     */
-    protected const MIN_ALPHA = 0.0001;
-    
-    /**
-     * The negative sampling exponent.
-     *
-     * @var float
-     */
-    protected const NS_EXPONENT = 0.75;    
+    protected $sigmoid;
 
     /**
      * @param string $layer
@@ -227,8 +225,8 @@ class Word2Vec implements Embedder, Stateful
         int $epochs = 10,
         int $minCount = 2
     ) {
-        if(!in_array($layer, ['neg', 'hs'])) {
-            throw new InvalidArgumentException("Layer must be neg or hs.");
+        if (!in_array($layer, ['neg', 'hs'])) {
+            throw new InvalidArgumentException('Layer must be neg or hs.');
         }
 
         if ($window > 5) {
@@ -277,7 +275,7 @@ class Word2Vec implements Embedder, Stateful
             DataType::categorical(),
         ];
     }
-    
+
     /**
      * Return the settings of the hyper-parameters in an associative array.
      *
@@ -319,7 +317,7 @@ class Word2Vec implements Embedder, Stateful
 
         $this->preprocess($sentences);
         $this->prepareWeights();
-        
+
         $startAlpha = $this->alpha;
 
         for ($i = 0; $i < $this->epochs; ++$i) {
@@ -329,6 +327,127 @@ class Word2Vec implements Embedder, Stateful
         }
 
         $this->generateL2Norm();
+    }
+
+    /**
+     * Embed a high dimensional dataset into a lower dimensional one.
+     *
+     * @param array[] $samples
+     * @throws \RuntimeException
+     */
+    public function transform(array &$samples) : void
+    {
+        if (!$this->vectorsNorm) {
+            throw new RuntimeException('Transformer has not been fitted.');
+        }
+
+        $embeddedDataset = [];
+
+        foreach ($samples as $featureSet) {
+            foreach ($featureSet as $i2 => $sentence) {
+                $preppedSentence = $this->prepSentence($sentence);
+
+                $embeddings = [];
+                foreach ($preppedSentence as $word) {
+                    $embeddings[] = $this->embedWord($word);
+                }
+
+                $embeddedDataset[][$i2] = Matrix::stack($embeddings)->transpose()->mean();
+            }
+        }
+
+        //return $embeddedDataset;
+    }
+
+    /**
+     * Determining the top N similar words provided an array of positive words and negative words.
+     *
+     * @param string[] $positive
+     * @param string[] $negative
+     * @param int $top
+     * @return string[] $result
+     */
+    public function mostSimilar(array $positive, array $negative = [], $top = 20) : array
+    {
+        $positiveArray = $negativeArray = $allWords = $means = [];
+
+        foreach ($positive as $word) {
+            $positiveArray[$word] = 1.0;
+        }
+
+        foreach ($negative as $word) {
+            $negativeArray[$word] = -1.0;
+        }
+
+        $wordArray = array_merge($positiveArray, $negativeArray);
+
+        foreach ($wordArray as $word => $weight) {
+            $wordEmbedding = $this->wordVec($word);
+
+            if ($wordEmbedding instanceof Vector) {
+                $means[] = $wordEmbedding->multiplyScalar($weight);
+                $allWords[] = $this->vocab[$word]['index'];
+            }
+        }
+
+        if (empty($allWords)) {
+            throw new InvalidArgumentException('Positive words were not found in vocab.');
+        }
+
+        $mean = Matrix::stack($means)->transpose()->mean();
+        $l2 = Matrix::stack($this->vectorsNorm);
+        $dists = $mean->transpose()->matmul($l2->transpose())->asArray()[0];
+
+        arsort($dists, 1);
+
+        $result = [];
+        foreach ($dists as $index => $weight) {
+            if (!in_array($index, $allWords)) {
+                $result[$this->index2word[$index]] = $weight;
+            }
+        }
+
+        return array_slice($result, 0, $top, true);
+    }
+
+    /**
+     * Returns the word embedding for a given word.
+     *
+     * @param string $word
+     * @param bool $use_norm
+     * @return \Tensor\Vector|null $result
+     */
+    public function wordVec(string $word, bool $use_norm = true) : ?Vector
+    {
+        if (!array_key_exists($word, $this->vocab)) {
+            return null;
+        }
+
+        if ($use_norm) {
+            $result = $this->vectorsNorm[$this->vocab[$word]['index']];
+        } else {
+            $result = $this->vectors[$this->vocab[$word]['index']];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns the word embedding, or a vector of zeros if empty, for a given word.
+     *
+     * @param string $word
+     * @param bool $use_norm
+     * @return \Tensor\Vector $result
+     */
+    public function embedWord(string $word, bool $use_norm = true) : Vector
+    {
+        $wordEmbedding = $this->wordVec($word);
+
+        if (!$wordEmbedding) {
+            $wordEmbedding = Vector::zeros($this->dimensions);
+        }
+
+        return $wordEmbedding;
     }
 
     /**
@@ -387,9 +506,7 @@ class Word2Vec implements Embedder, Stateful
         $sentence = (string) preg_replace('#[[:punct:]]#', '', strtolower($sentence));
         $sentence = (string) preg_replace('/\s\s+/', ' ', str_replace("\n", ' ', $sentence));
         $sentence = trim($sentence);
-        $exploded = explode(' ', $sentence);
-
-        return $exploded;
+        return explode(' ', $sentence);
     }
 
     /**
@@ -421,11 +538,11 @@ class Word2Vec implements Embedder, Stateful
                 $this->vocab[$word] = ['count' => $v, 'index' => count($this->index2word), 'word' => $word];
                 $this->index2word[] = $word;
             } else {
-                ++ $dropUnique;
+                ++$dropUnique;
                 $dropTotal += $v;
             }
         }
-        
+
         $originalUniqueTotal = count($retainWords) + $dropUnique;
         $retainUniquePct = ((count($retainWords) * 100) / $originalUniqueTotal);
 
@@ -471,7 +588,7 @@ class Word2Vec implements Embedder, Stateful
             $wordProbability = (sqrt($v / $thresholdCount) + 1) * ($thresholdCount / $v);
 
             if ($wordProbability < 1) {
-                ++ $downsampleUnique;
+                ++$downsampleUnique;
                 $downsampleTotal += $wordProbability * $v;
             } else {
                 $wordProbability = 1;
@@ -506,17 +623,17 @@ class Word2Vec implements Embedder, Stateful
      */
     private function createCumTable() : void
     {
-        $domain = ((2 ** 31) -1);
+        $domain = ((2 ** 31) - 1);
         $trainWordsPow = $cumulative = 0;
         $cumTable = array_fill(0, $this->vocabCount, 0);
 
-        for($i=0; $i < $this->vocabCount; ++$i) {
+        for ($i = 0; $i < $this->vocabCount; ++$i) {
             $trainWordsPow += ($this->vocab[$this->index2word[$i]]['count'] ** self::NS_EXPONENT);
         }
-        
-        for($i=0; $i < $this->vocabCount; ++$i) {
+
+        for ($i = 0; $i < $this->vocabCount; ++$i) {
             $cumulative += ($this->vocab[$this->index2word[$i]]['count'] ** self::NS_EXPONENT);
-            $cumTable[$i] = (int) round(($cumulative / $trainWordsPow) * $domain);            
+            $cumTable[$i] = (int) round(($cumulative / $trainWordsPow) * $domain);
         }
 
         $this->cumTable = $cumTable;
@@ -531,10 +648,10 @@ class Word2Vec implements Embedder, Stateful
         $heap = $this->buildHeap($this->vocab);
         $maxDepth = 0;
         $stack = [[$heap[0], [], []]];
-        
+
         while ($stack) {
             $stackItem = array_pop($stack);
-            
+
             if (empty($stackItem)) {
                 break;
             }
@@ -558,7 +675,7 @@ class Word2Vec implements Embedder, Stateful
                 $stack[] = [$node['left'], $codeLeft, $points];
                 $stack[] = [$node['right'], $codeRight, $points];
             }
-        }        
+        }
     }
 
     /**
@@ -572,8 +689,8 @@ class Word2Vec implements Embedder, Stateful
     {
         $heap = new Heap($vocabulary);
         $maxRange = (count($vocabulary) - 2);
-        
-        for($i=0; $i<=$maxRange; ++$i) {
+
+        for ($i = 0; $i <= $maxRange; ++$i) {
             $min1 = $heap->heappop();
             $min2 = $heap->heappop();
 
@@ -588,7 +705,7 @@ class Word2Vec implements Embedder, Stateful
                 $heap->heappush($new_item);
             }
         }
-    
+
         return $heap->heap();
     }
 
@@ -598,7 +715,7 @@ class Word2Vec implements Embedder, Stateful
      */
     private function prepareWeights() : void
     {
-        for($i=0; $i < $this->vocabCount; ++$i) {
+        for ($i = 0; $i < $this->vocabCount; ++$i) {
             $this->syn1[] = Vector::zeros($this->dimensions);
             $this->vectors[$i] = Vector::rand($this->dimensions)->subtractScalar(0.5)->divideScalar($this->dimensions);
         }
@@ -731,7 +848,7 @@ class Word2Vec implements Embedder, Stateful
 
             continue;
         }
-        
+
         $l2 = $this->layerMatrix($wordIndices);
         $fa = $this->propagateHidden($l2, $l1);
         $gb = $this->negLabels->subtractVector($fa)->multiplyScalar($this->alpha);
@@ -772,7 +889,7 @@ class Word2Vec implements Embedder, Stateful
 
         foreach ($wordIndices as $index) {
             $this->syn1[$index] = $this->syn1[$index]->addVector($c->rowAsVector($count));
-            ++ $count;
+            ++$count;
         }
     }
 
@@ -803,128 +920,4 @@ class Word2Vec implements Embedder, Stateful
 
         $this->vectorsNorm = $l2Norm;
     }
-
-    /**
-     * Embed a high dimensional dataset into a lower dimensional one.
-     *
-     * @param array[] $samples
-     * @throws \RuntimeException
-     */
-    public function transform(array &$samples) : void
-    {
-        if (!$this->vectorsNorm) {
-            throw new RuntimeException('Transformer has not been fitted.');
-        }        
-
-        $embeddedDataset = [];
-
-        foreach ($samples as $featureSet) {
-            foreach ($featureSet as $i2 => $sentence) {
-                $preppedSentence = $this->prepSentence($sentence);
-
-                $embeddings = [];
-                foreach ($preppedSentence as $word) {
-                    $embeddings[] = $this->embedWord($word);
-                }
-
-                $embeddedDataset[][$i2] = Matrix::stack($embeddings)->transpose()->mean();
-            }
-        }
-
-        #return $embeddedDataset;
-    }
-
-    /**
-     * Determining the top N similar words provided an array of positive words and negative words.
-     *
-     * @param string[] $positive
-     * @param string[] $negative
-     * @param int $top
-     * @return string[] $result
-     */
-    public function mostSimilar(array $positive, array $negative = [], $top = 20) : array
-    {
-        $positiveArray = $negativeArray = $allWords = $means = [];
-
-        foreach ($positive as $word) {
-            $positiveArray[$word] = 1.0;
-        }
-        
-        foreach ($negative as $word) {
-            $negativeArray[$word] = -1.0;
-        }
-
-        $wordArray = array_merge($positiveArray, $negativeArray);
-
-        foreach ($wordArray as $word => $weight) {
-            $wordEmbedding = $this->wordVec($word);
-
-            if ($wordEmbedding instanceof Vector) {
-                $means[] = $wordEmbedding->multiplyScalar($weight);
-                $allWords[] = $this->vocab[$word]['index'];
-            }
-        }
-
-        if (empty($allWords)) {
-            throw new InvalidArgumentException('Positive words were not found in vocab.');
-        }
-
-        $mean = Matrix::stack($means)->transpose()->mean();
-        $l2 = Matrix::stack($this->vectorsNorm);
-        $dists = $mean->transpose()->matmul($l2->transpose())->asArray()[0];
-
-        arsort($dists, 1);
-
-        $result = [];
-        foreach ($dists as $index => $weight) {
-            if (!in_array($index, $allWords)) {
-                $result[$this->index2word[$index]] = $weight;
-            }
-        }
-
-        $result = array_slice($result, 0, $top, true);
-
-        return $result;
-    }
-
-    /**
-     * Returns the word embedding for a given word.
-     *
-     * @param string $word
-     * @param bool $use_norm
-     * @return \Tensor\Vector|null $result
-     */
-    public function wordVec(string $word, bool $use_norm = true) : ?Vector
-    {
-        if (!array_key_exists($word, $this->vocab)) {
-            return null;
-        }
-
-        if ($use_norm) {
-            $result = $this->vectorsNorm[$this->vocab[$word]['index']];
-        } else {
-            $result = $this->vectors[$this->vocab[$word]['index']];
-        }
-
-        return $result;
-    }
-
-    /**
-     * Returns the word embedding, or a vector of zeros if empty, for a given word.
-     *
-     * @param string $word
-     * @param bool $use_norm
-     * @return \Tensor\Vector $result
-     */
-    public function embedWord(string $word, bool $use_norm = true) : Vector
-    {
-        $wordEmbedding = $this->wordVec($word);
-
-        if (!$wordEmbedding) {
-            $wordEmbedding = Vector::zeros($this->dimensions);
-        }
-
-        return $wordEmbedding;
-    }
-
 }

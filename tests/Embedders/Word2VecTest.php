@@ -5,7 +5,6 @@ namespace Rubix\ML\Tests\Embedders;
 use Rubix\ML\DataType;
 use Rubix\ML\Datasets\Unlabeled;
 use Rubix\ML\Embedders\Word2Vec;
-use Rubix\ML\Other\Loggers\BlackHole;
 
 use PHPUnit\Framework\TestCase;
 use InvalidArgumentException;
@@ -126,5 +125,4 @@ class Word2VecTest extends TestCase
         $score = $mostSimilar['fast'];
         $this->assertGreaterThanOrEqual(.37, $score);
     }
-
 }

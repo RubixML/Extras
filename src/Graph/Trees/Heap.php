@@ -58,13 +58,13 @@ class Heap
      */
     public function heappop() : ?array
     {
-        if (!is_array($this->heap) OR empty($this->heap)) {
+        if (!is_array($this->heap) or empty($this->heap)) {
             return null;
         }
 
         $last_element = array_pop($this->heap);
 
-        if (!is_array($this->heap) OR empty($this->heap)) {
+        if (!is_array($this->heap) or empty($this->heap)) {
             return $last_element;
         }
 
@@ -141,8 +141,8 @@ class Heap
             } else {
                 $right_heap = $this->heap[$right_pos]['count'];
             }
-            
-            if ($right_pos < $end_pos AND ($this->heap[$child_pos]['count'] >= $right_heap)) {
+
+            if ($right_pos < $end_pos and ($this->heap[$child_pos]['count'] >= $right_heap)) {
                 $child_pos = $right_pos;
             }
 
@@ -172,9 +172,8 @@ class Heap
 
         for ($i = $maxRange; $i >= 0; --$i) {
             $this->heap = $this->siftup($this->heap, ((int) $i));
-        }        
-        
+        }
+
         return $this->heap;
     }
-    
 }
