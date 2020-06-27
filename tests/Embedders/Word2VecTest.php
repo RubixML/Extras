@@ -52,8 +52,6 @@ class Word2VecTest extends TestCase
 
         $this->embedder = new Word2Vec('neg', 2, 100, 0, .05, 1000, 1);
 
-        $this->embedder->setLogger(new BlackHole());
-
         srand(self::RANDOM_SEED);
     }
 
@@ -62,7 +60,7 @@ class Word2VecTest extends TestCase
      */
     public function assertPreConditions() : void
     {
-        $this->assertFalse($this->embedder->trained());
+        $this->assertFalse($this->embedder->fitted());
     }
 
     /**
@@ -118,12 +116,11 @@ class Word2VecTest extends TestCase
      */
     public function trainPredict() : void
     {
-        $this->embedder->setLogger(new BlackHole());
-        $this->embedder->train($this->sampleDataset);
+        $this->embedder->fit($this->sampleDataset);
 
-        $this->assertTrue($this->embedder->trained());
+        $this->assertTrue($this->embedder->fitted());
 
-        $mostSimilar = $this->embedder->most_similar(['dog']);
+        $mostSimilar = $this->embedder->mostSimilar(['dog']);
         $this->assertArrayHasKey('fast', $mostSimilar);
 
         $score = $mostSimilar['fast'];
@@ -133,11 +130,9 @@ class Word2VecTest extends TestCase
     /**
      * @test
      */
-    public function embed() : void
+    public function transform() : void
     {
-        $samples = $this->embedder->embed($this->sampleDataset);
-
-        $this->assertCount(self::DATASET_SIZE, $samples);
-        $this->assertCount(1, $samples[0]);
+        $samples = $this->sampleDataset->samples();
+        $this->embedder->transform($samples);
     }
 }
