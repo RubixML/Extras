@@ -306,6 +306,7 @@ class Word2Vec implements Embedder, Stateful
 
     /**
      * Iterating through a range of the specific epoch count and updating all respective word vectors.
+     * 
      * @param \Rubix\ML\Datasets\Dataset $dataset
      * @throws \InvalidArgumentException
      */
@@ -355,8 +356,6 @@ class Word2Vec implements Embedder, Stateful
                 $embeddedDataset[][$i2] = Matrix::stack($embeddings)->transpose()->mean();
             }
         }
-
-        //return $embeddedDataset;
     }
 
     /**
