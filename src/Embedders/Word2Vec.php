@@ -414,16 +414,16 @@ class Word2Vec implements Embedder, Stateful
      * Returns the word embedding for a given word.
      *
      * @param string $word
-     * @param bool $use_norm
+     * @param bool $useNorm
      * @return \Tensor\Vector|null $result
      */
-    public function wordVec(string $word, bool $use_norm = true) : ?Vector
+    public function wordVec(string $word, bool $useNorm = true) : ?Vector
     {
         if (!array_key_exists($word, $this->vocab)) {
             return null;
         }
 
-        if ($use_norm) {
+        if ($useNorm) {
             $result = $this->vectorsNorm[$this->vocab[$word]['index']];
         } else {
             $result = $this->vectors[$this->vocab[$word]['index']];
@@ -436,10 +436,10 @@ class Word2Vec implements Embedder, Stateful
      * Returns the word embedding, or a vector of zeros if empty, for a given word.
      *
      * @param string $word
-     * @param bool $use_norm
+     * @param bool $useNorm
      * @return \Tensor\Vector $result
      */
-    public function embedWord(string $word, bool $use_norm = true) : Vector
+    public function embedWord(string $word, bool $useNorm = true) : Vector
     {
         $wordEmbedding = $this->wordVec($word);
 
