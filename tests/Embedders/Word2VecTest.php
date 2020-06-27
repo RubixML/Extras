@@ -127,12 +127,4 @@ class Word2VecTest extends TestCase
         $this->assertGreaterThanOrEqual(.37, $score);
     }
 
-    /**
-     * @test
-     */
-    public function transform() : void
-    {
-        $samples = $this->sampleDataset->samples();
-        $this->embedder->transform($samples);
-    }
 }
