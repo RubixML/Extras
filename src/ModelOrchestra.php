@@ -376,4 +376,14 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
 
         return array_transpose($this->backend->process());
     }
+
+    /**
+     * Return the string representation of the object.
+     *
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return 'Model Orchestra {' . Params::stringify($this->params()) . '}';
+    }
 }

@@ -193,4 +193,15 @@ class RecursiveFeatureEliminator implements Transformer, Stateful
             $sample = array_values(array_intersect_key($sample, $this->importances));
         }
     }
+
+    /**
+     * Return the string representation of the object.
+     *
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return "Recursive Feature Eliminator {max features: {$this->maxFeatures}}"
+            . " {epochs: {$this->epochs} base: {$this->base}}";
+    }
 }

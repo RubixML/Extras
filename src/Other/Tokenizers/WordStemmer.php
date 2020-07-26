@@ -40,4 +40,14 @@ class WordStemmer extends Word
     {
         return array_map([$this->stemmer, 'stem'], parent::tokenize($string));
     }
+
+    /**
+     * Return the string representation of the object.
+     *
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return 'Word Stemmer';
+    }
 }

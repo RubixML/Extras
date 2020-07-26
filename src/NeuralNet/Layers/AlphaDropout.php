@@ -192,4 +192,14 @@ class AlphaDropout implements Hidden
     {
         return $value == 0 ? self::ALPHA_P : 0.0;
     }
+
+    /**
+     * Return the string representation of the object.
+     *
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return "Alpha Dropout {ratio: {$this->ratio}}";
+    }
 }

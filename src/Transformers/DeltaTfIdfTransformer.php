@@ -207,4 +207,14 @@ class DeltaTfIdfTransformer implements Elastic
             }
         }
     }
+
+    /**
+     * Return the string representation of the object.
+     *
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return 'Delta TF-IDF Transformer';
+    }
 }

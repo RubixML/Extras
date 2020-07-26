@@ -87,4 +87,14 @@ class ISRU implements ActivationFunction
 
         return Matrix::quick($derivative);
     }
+
+    /**
+     * Return the string representation of the object.
+     *
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return "ISRU {alpha: {$this->alpha}}";
+    }
 }
