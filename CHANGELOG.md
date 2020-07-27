@@ -1,0 +1,3 @@
+- Unreleased
+    - Added Lambda function Transformer
+    - All objects implement Stringable interface
