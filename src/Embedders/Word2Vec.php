@@ -4,10 +4,13 @@ namespace Rubix\ML\Embedders;
 
 use Rubix\ML\DataType;
 use Rubix\ML\Datasets\Dataset;
-use Rubix\ML\Graph\Trees\Heap;
+use Rubix\ML\Other\Helpers\Params;
 use Rubix\ML\NeuralNet\ActivationFunctions\Sigmoid;
 use Rubix\ML\Specifications\DatasetIsNotEmpty;
 use Rubix\ML\Transformers\Stateful;
+use Rubix\ML\Specifications\SamplesAreCompatibleWithTransformer;
+use Rubix\ML\Embedders\SoftmaxApproximations\SoftmaxApproximation;
+use Rubix\ML\Embedders\SoftmaxApproximations\NegativeSampling;
 use Tensor\Matrix;
 use Tensor\Vector;
 use InvalidArgumentException;
@@ -45,13 +48,6 @@ class Word2Vec implements Embedder, Stateful
     protected const MIN_ALPHA = 0.0001;
 
     /**
-     * The negative sampling exponent.
-     *
-     * @var float
-     */
-    protected const NS_EXPONENT = 0.75;
-
-    /**
      * An array of sanitized and exploded sentences.
      *
      * @var array[]
@@ -68,7 +64,7 @@ class Word2Vec implements Embedder, Stateful
     /**
      * An array containing each word in the corpus and it's respective index, count, and multiplier.
      *
-     * @var mixed[]
+     * @var array[]
      */
     protected $vocab = [];
 
@@ -80,7 +76,7 @@ class Word2Vec implements Embedder, Stateful
     protected $index2word = [];
 
     /**
-     * An array containing the hidden layer.
+     * An array of output embeddings.
      *
      * @var Vector[]
      */
@@ -115,39 +111,11 @@ class Word2Vec implements Embedder, Stateful
     protected $vectorsNorm = [];
 
     /**
-     * The cumulative distrubtion table for negative sampling.
+     * The approximation sampling algorithm.
      *
-     * @var int[]
+     * @var SoftmaxApproximation
      */
-    protected $cumTable = [];
-
-    /**
-     * The last digit in the cumulative distribution table.
-     *
-     * @var int
-     */
-    protected $endCumDigit;
-
-    /**
-     * The negative labels used in the cumulative distrubtion table.
-     *
-     * @var \Tensor\Vector
-     */
-    protected $negLabels;
-
-    /**
-     * The training method determined by the layer they determine.
-     *
-     * @var string
-     */
-    protected $trainMethod;
-
-    /**
-     * The layer of the network, accepts 'neg' or 'hs'.
-     *
-     * @var string
-     */
-    protected $layer;
+    protected $approximation;
 
     /**
      * The window size for the skip-gram model.
@@ -157,7 +125,7 @@ class Word2Vec implements Embedder, Stateful
     protected $window;
 
     /**
-     * Vector dimension size.
+     * The dimensionality of each embedded feature column.
      *
      * @var int
      */
@@ -207,7 +175,7 @@ class Word2Vec implements Embedder, Stateful
     protected $sigmoid;
 
     /**
-     * @param string $layer
+     * @param SoftmaxApproximation $approximation
      * @param int $window
      * @param int $dimensions
      * @param float $sampleRate
@@ -217,15 +185,15 @@ class Word2Vec implements Embedder, Stateful
      * @throws \InvalidArgumentException
      */
     public function __construct(
-        string $layer = 'neg',
-        int $window = 2,
         int $dimensions = 5,
+        ?SoftmaxApproximation $approximation = null,
+        int $window = 2,
         float $sampleRate = 1e-3,
         float $alpha = 0.01,
         int $epochs = 10,
         int $minCount = 2
     ) {
-        if (!in_array($layer, ['neg', 'hs'])) {
+        if (!$approximation instanceof SoftmaxApproximation) {
             throw new InvalidArgumentException('Layer must be neg or hs.');
         }
 
@@ -253,15 +221,44 @@ class Word2Vec implements Embedder, Stateful
             throw new InvalidArgumentException("Minimum word count must be greater than 0, $minCount given.");
         }
 
-        $this->layer = $layer;
+        $this->approximation = $approximation ?? new NegativeSampling();
         $this->window = $window;
         $this->dimensions = $dimensions;
         $this->sampleRate = $sampleRate;
         $this->alpha = $alpha;
         $this->epochs = $epochs;
         $this->minCount = $minCount;
-        $this->negLabels = Vector::quick([1, 0]);
         $this->sigmoid = new Sigmoid();
+    }
+
+    /**
+     * Return the vocab array.
+     *
+     * @return mixed[]
+     */
+    public function vocab() : array
+    {
+        return $this->vocab;
+    }
+
+    /**
+     * Return the vocab count.
+     *
+     * @return int
+     */
+    public function vocabCount() : int
+    {
+        return $this->vocabCount;
+    }
+
+    /**
+     * Return the index2word array.
+     *
+     * @return int[]
+     */
+    public function index2word() : array
+    {
+        return $this->index2word;
     }
 
     /**
@@ -284,7 +281,7 @@ class Word2Vec implements Embedder, Stateful
     public function params() : array
     {
         return [
-            'layer' => $this->layer,
+            'layer' => $this->approximation,
             'window' => $this->window,
             'dimensions' => $this->dimensions,
             'sample_rate' => $this->sampleRate,
@@ -305,7 +302,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Iterating through a range of the specific epoch count and updating all respective word vectors.
+     * Iterate through a range of the specific epoch count and updating all respective word vectors.
      *
      * @param \Rubix\ML\Datasets\Dataset $dataset
      * @throws \InvalidArgumentException
@@ -313,6 +310,7 @@ class Word2Vec implements Embedder, Stateful
     public function fit(Dataset $dataset) : void
     {
         DatasetIsNotEmpty::check($dataset);
+        SamplesAreCompatibleWithTransformer::check($dataset, $this);
 
         $sentences = $dataset->column(0);
 
@@ -328,6 +326,45 @@ class Word2Vec implements Embedder, Stateful
         }
 
         $this->generateL2Norm();
+        unset($this->error);
+    }
+
+    /**
+     * Return the word embedding for a given word.
+     *
+     * @param string $word
+     * @param bool $useNorm
+     * @return \Tensor\Vector|null $result
+     */
+    public function wordVec(string $word, bool $useNorm = true) : ?Vector
+    {
+        if (!array_key_exists($word, $this->vocab)) {
+            return null;
+        }
+
+        if ($useNorm) {
+            return $this->vectorsNorm[$this->vocab[$word]['index']];
+        }
+
+        return $this->vectors[$this->vocab[$word]['index']];
+    }
+
+    /**
+     * Return the word embedding, or a vector of zeros if empty, for a given word.
+     *
+     * @param string $word
+     * @param bool $useNorm
+     * @return \Tensor\Vector $result
+     */
+    public function embedWord(string $word, bool $useNorm = true) : Vector
+    {
+        $wordEmbedding = $this->wordVec($word, $useNorm);
+
+        if (!$wordEmbedding) {
+            $wordEmbedding = Vector::zeros($this->dimensions);
+        }
+
+        return $wordEmbedding;
     }
 
     /**
@@ -342,6 +379,8 @@ class Word2Vec implements Embedder, Stateful
             throw new RuntimeException('Transformer has not been fitted.');
         }
 
+        //SamplesAreCompatibleWithTransformer::check($dataset, $this);
+
         foreach ($samples as &$sample) {
             foreach ($sample as $i2 => $sentence) {
                 $preppedSentence = $this->prepSentence($sentence);
@@ -350,8 +389,6 @@ class Word2Vec implements Embedder, Stateful
                 foreach ($preppedSentence as $word) {
                     $embeddings[] = $this->embedWord($word);
                 }
-
-                unset($sample[$i2]);
             }
 
             if (isset($embeddings)) {
@@ -361,7 +398,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Determining the top N similar words provided an array of positive words and negative words.
+     * Determine the top N similar words provided an array of positive words and negative words.
      *
      * @param string[] $positive
      * @param string[] $negative
@@ -399,7 +436,7 @@ class Word2Vec implements Embedder, Stateful
         $l2 = Matrix::stack($this->vectorsNorm);
         $dists = $mean->transpose()->matmul($l2->transpose())->asArray()[0];
 
-        arsort($dists, 1);
+        arsort($dists, SORT_REGULAR);
 
         $result = [];
         foreach ($dists as $index => $weight) {
@@ -412,47 +449,26 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Returns the word embedding for a given word.
+     * Update vector weights and return error.
      *
-     * @param string $word
-     * @param bool $useNorm
-     * @return \Tensor\Vector|null $result
+     * @param mixed[] $predictWord
+     * @param \Tensor\Vector $l1
+     * @return \Tensor\Vector
      */
-    public function wordVec(string $word, bool $useNorm = true) : ?Vector
+    protected function error($predictWord, $l1) : Vector
     {
-        if (!array_key_exists($word, $this->vocab)) {
-            return null;
-        }
+        $wordIndices = $this->approximation->wordIndices($predictWord);
+        $l2 = $this->layerMatrix($wordIndices);
+        $fa = $this->propagateHidden($l2, $l1);
+        $gd = $this->approximation->gradientDescent($fa, $predictWord['word'], $this->alpha);
 
-        if ($useNorm) {
-            $result = $this->vectorsNorm[$this->vocab[$word]['index']];
-        } else {
-            $result = $this->vectors[$this->vocab[$word]['index']];
-        }
+        $this->learnHidden($wordIndices, $gd, $l1);
 
-        return $result;
+        return $this->error->addMatrix($gd->matmul($l2))->rowAsVector(0);
     }
 
     /**
-     * Returns the word embedding, or a vector of zeros if empty, for a given word.
-     *
-     * @param string $word
-     * @param bool $useNorm
-     * @return \Tensor\Vector $result
-     */
-    public function embedWord(string $word, bool $useNorm = true) : Vector
-    {
-        $wordEmbedding = $this->wordVec($word);
-
-        if (!$wordEmbedding) {
-            $wordEmbedding = Vector::zeros($this->dimensions);
-        }
-
-        return $wordEmbedding;
-    }
-
-    /**
-     * Scanning vocab, preparing vocab, sorting vocab, setting sampling methods
+     * Scan vocab, prepare vocab, sort vocab, set sampling methods
      *
      * @param string[] $sentences
      */
@@ -464,20 +480,11 @@ class Word2Vec implements Embedder, Stateful
         $this->prepVocab();
         $this->sortVocab();
 
-        switch ($this->layer) {
-            case 'hs':
-                $this->createBinaryTree();
-                $this->trainMethod = 'trainPairSgHS';
-                break;
-            case 'neg':
-                $this->createCumTable();
-                $this->trainMethod = 'trainPairSgNeg';
-                break;
-        }
+        $this->approximation->structureSampling($this);
     }
 
     /**
-     * Parsing, sanitizing, & preparing array of sentences to generate & set corpus.
+     * Parse, sanitize, & prepare an array of sentences to generate & set corpus.
      *
      * @param string[] $sentences
      * @return string[] $words
@@ -497,7 +504,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Sanitizing & exploding a provided sentence.
+     * Sanitize & explode a provided sentence.
      *
      * @param string $sentence
      * @return string[] $exploded
@@ -507,11 +514,12 @@ class Word2Vec implements Embedder, Stateful
         $sentence = (string) preg_replace('#[[:punct:]]#', '', strtolower($sentence));
         $sentence = (string) preg_replace('/\s\s+/', ' ', str_replace("\n", ' ', $sentence));
         $sentence = trim($sentence);
+
         return explode(' ', $sentence);
     }
 
     /**
-     * Preparing and setting an initial raw vocab array for additional preprocessing
+     * Prepare and set an initial raw vocab array for additional preprocessing
      *
      * @param string[] $words
      */
@@ -523,8 +531,8 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Iterating through each word in raw vocab and formally appending word, and corresponding word count, index, and word, to vocab property.
-     * Creating initial index2word property to manage word counts.
+     * Iterate through each word in raw vocab and formally appending word, and corresponding word count, index, and word, to vocab property.
+     * Create initial index2word property to manage word counts.
      */
     private function prepVocab() : void
     {
@@ -545,10 +553,10 @@ class Word2Vec implements Embedder, Stateful
         }
 
         $originalUniqueTotal = count($retainWords) + $dropUnique;
-        $retainUniquePct = ((count($retainWords) * 100) / $originalUniqueTotal);
+        $retainUniquePct = (count($retainWords) * 100) / $originalUniqueTotal;
 
         $originalTotal = $retainTotal + $dropTotal;
-        $retainPct = (($retainTotal * 100) / $originalTotal);
+        $retainPct = ($retainTotal * 100) / $originalTotal;
 
         $thresholdCount = $this->thresholdCount($retainTotal);
 
@@ -559,23 +567,22 @@ class Word2Vec implements Embedder, Stateful
      * Determine threshold word count based off of subsampling rate.
      *
      * @param int $retainTotal
-     * @return float $thresholdCount
+     * @return float
      */
     private function thresholdCount(int $retainTotal) : float
     {
         if (!$this->sampleRate) {
-            $thresholdCount = $retainTotal;
-        } elseif ($this->sampleRate < 1) {
-            $thresholdCount = $this->sampleRate * $retainTotal;
-        } else {
-            $thresholdCount = ($this->sampleRate * (3 + sqrt(5)) / 2);
+            return $retainTotal;
+        }
+        if ($this->sampleRate < 1) {
+            return $this->sampleRate * $retainTotal;
         }
 
-        return $thresholdCount;
+        return $this->sampleRate * (3 + sqrt(5)) / 2;
     }
 
     /**
-     * Assigns word probabilities, determined by subsampling rate, to each word in vocabulary.
+     * Assign word probabilities, determined by subsampling rate, to each word in vocabulary.
      *
      * @param string[] $retainWords
      * @param float $thresholdCount
@@ -601,7 +608,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Sorts vocabulary, creates index2word property, and assigns respective word index to each vocabulary word.
+     * Sort vocabulary, create index2word property, and assign respective word index to each vocabulary word.
      */
     private function sortVocab() : void
     {
@@ -620,99 +627,8 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Creates & sets cumulative distribution table for Negative Sampling
-     */
-    private function createCumTable() : void
-    {
-        $domain = ((2 ** 31) - 1);
-        $trainWordsPow = $cumulative = 0;
-        $cumTable = array_fill(0, $this->vocabCount, 0);
-
-        for ($i = 0; $i < $this->vocabCount; ++$i) {
-            $trainWordsPow += ($this->vocab[$this->index2word[$i]]['count'] ** self::NS_EXPONENT);
-        }
-
-        for ($i = 0; $i < $this->vocabCount; ++$i) {
-            $cumulative += ($this->vocab[$this->index2word[$i]]['count'] ** self::NS_EXPONENT);
-            $cumTable[$i] = (int) round(($cumulative / $trainWordsPow) * $domain);
-        }
-
-        $this->cumTable = $cumTable;
-        $this->endCumDigit = (int) end($cumTable);
-    }
-
-    /**
-     * Creates & sets binary tree for Hierarchical Softmax Sampling
-     */
-    private function createBinaryTree() : void
-    {
-        $heap = $this->buildHeap($this->vocab);
-        $maxDepth = 0;
-        $stack = [[$heap[0], [], []]];
-
-        while ($stack) {
-            $stackItem = array_pop($stack);
-
-            if (empty($stackItem)) {
-                break;
-            }
-
-            $points = $stackItem[2];
-            $codes = $stackItem[1];
-            $node = $stackItem[0];
-
-            if ($node['index'] < $this->vocabCount) {
-                $this->vocab[$node['word']]['code'] = Vector::quick($codes);
-                $this->vocab[$node['word']]['point'] = $points;
-
-                $maxDepth = max(count($codes), $maxDepth);
-            } else {
-                $points[] = ($node['index'] - $this->vocabCount);
-                $codeLeft = $codeRight = $codes;
-
-                $codeLeft[] = 0;
-                $codeRight[] = 1;
-
-                $stack[] = [$node['left'], $codeLeft, $points];
-                $stack[] = [$node['right'], $codeRight, $points];
-            }
-        }
-    }
-
-    /**
-     * Builds a heap queue, prioritizing each word's respective word count, to initialize the binary tree.
-     * Vocabulary array must include count index and value for each word.
-     *
-     * @param array[] $vocabulary
-     * @return array[] $heap
-     */
-    private function buildHeap(array $vocabulary) : array
-    {
-        $heap = new Heap($vocabulary);
-        $maxRange = (count($vocabulary) - 2);
-
-        for ($i = 0; $i <= $maxRange; ++$i) {
-            $min1 = $heap->heappop();
-            $min2 = $heap->heappop();
-
-            if (!empty($min1) && !empty($min2)) {
-                $new_item = [
-                    'count' => ($min1['count'] + $min2['count']),
-                    'index' => ($i + (count($vocabulary))),
-                    'left' => $min1,
-                    'right' => $min2
-                ];
-
-                $heap->heappush($new_item);
-            }
-        }
-
-        return $heap->heap();
-    }
-
-    /**
-     * Assigning a random vector for each word in the corpus, instead of creating a massive random matrix for RAM purposes.
-     * Creating zeroed vectors for syn and error.
+     * Assign random vector for each word in the corpus, instead of creating a massive random matrix for RAM purposes.
+     * Create zeroed vectors for syn and error.
      */
     private function prepareWeights() : void
     {
@@ -726,7 +642,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Training one epoch from the corpus and updating all respective word vectors.
+     * Train one epoch from the corpus and updating all respective word vectors.
      */
     private function trainEpochSg() : void
     {
@@ -749,7 +665,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Builds an array of Word Vocabs that exceed a random multiplier from the sentence for more accurate and faster training
+     * Build an array of Word Vocabs that exceed a random multiplier from the sentence for more accurate and faster training
      *
      * @param string[] $sentence
      * @return array[] $wordVocabs
@@ -771,7 +687,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Builds an array from the word vocab in skip-gram sequence
+     * Build an array from the word vocab in skip-gram sequence
      *
      * @param int $pos
      * @param array[] $wordVocabs
@@ -787,7 +703,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Determining appropriate word pair training method and updating the word's vector weights.
+     * Determine appropriate word pair training method and updating the word's vector weights.
      *
      * @param string $wordIndex
      * @param int $contextIndex
@@ -797,70 +713,13 @@ class Word2Vec implements Embedder, Stateful
         $predictWord = $this->vocab[$wordIndex];
         $l1 = $this->vectors[$contextIndex];
         $lockFactor = $this->vectorsLockf[$contextIndex];
-        $trainMethod = $this->trainMethod;
-
-        $error = $this->$trainMethod($predictWord, $l1);
+        $error = $this->error($predictWord, $l1);
 
         $this->vectors[$contextIndex] = $l1->addVector($error->multiplyScalar($lockFactor));
     }
 
     /**
-     * Calculate the weight of the word sample using hierarchical softmax.
-     *
-     * @param mixed[] $predictWord
-     * @param \Tensor\Vector $l1
-     * @return \Tensor\Vector
-     */
-    private function trainPairSgHS(array $predictWord, Vector $l1) : Vector
-    {
-        $word_indices = $predictWord['point'];
-
-        $l2 = $this->layerMatrix($word_indices);
-        $fa = $this->propagateHidden($l2, $l1);
-        $gb = $fa->addVector($predictWord['code'])->negate()->addScalar(1)->multiplyScalar($this->alpha);
-
-        $this->learnHidden($word_indices, $gb, $l1);
-
-        return $this->error->addMatrix($gb->matmul($l2))->rowAsVector(0);
-    }
-
-    /**
-     * Calculate & return new vector weight of word sample using negative sampling.
-     *
-     * @param array[] $predictWord
-     * @param \Tensor\Vector $l1
-     * @return \Tensor\Vector
-     */
-    private function trainPairSgNeg(array $predictWord, Vector $l1) : Vector
-    {
-        $wordIndices = [$predictWord['index']];
-
-        while (count($wordIndices) < 1 + 1) {
-            $temp = $this->cumTable;
-            $randInt = rand(0, $this->endCumDigit);
-            $temp[] = $randInt;
-
-            sort($temp);
-            $w = array_search($randInt, $temp);
-
-            if ($w !== $predictWord['index']) {
-                $wordIndices[] = $w;
-            }
-
-            continue;
-        }
-
-        $l2 = $this->layerMatrix($wordIndices);
-        $fa = $this->propagateHidden($l2, $l1);
-        $gb = $this->negLabels->subtractVector($fa)->multiplyScalar($this->alpha);
-
-        $this->learnHidden($wordIndices, $gb, $l1);
-
-        return $this->error->addMatrix($gb->matmul($l2))->rowAsVector(0);
-    }
-
-    /**
-     * Creating 2-d matrix from word indices.
+     * Create 2-d matrix from word indices.
      *
      * @param mixed[] $wordIndices
      * @return \Tensor\Matrix
@@ -877,7 +736,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Updating the hidden layer for given word index supplied the outer product of the word vector and error gradients.
+     * Update the hidden layer for given word index supplied the outer product of the word vector and error gradients.
      *
      * @param mixed[] $wordIndices
      * @param \Tensor\Vector $g
@@ -895,7 +754,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Propagating hidden layer.
+     * Propagate hidden layer.
      *
      * @param \Tensor\Matrix $l2
      * @param \Tensor\Vector $l1
@@ -909,7 +768,7 @@ class Word2Vec implements Embedder, Stateful
     }
 
     /**
-     * Generating L2 Norm of final word vectors.
+     * Generate L2 Norm of final word vectors.
      */
     private function generateL2Norm() : void
     {
@@ -920,5 +779,15 @@ class Word2Vec implements Embedder, Stateful
         }
 
         $this->vectorsNorm = $l2Norm;
+    }
+
+    /**
+     * Return the string representation of the object.
+     *
+     * @return string
+     */
+    public function __toString() : string
+    {
+        return 't-SNE {' . Params::stringify($this->params()) . '}';
     }
 }

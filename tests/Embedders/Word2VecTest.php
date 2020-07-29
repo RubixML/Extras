@@ -5,7 +5,7 @@ namespace Rubix\ML\Tests\Embedders;
 use Rubix\ML\DataType;
 use Rubix\ML\Datasets\Unlabeled;
 use Rubix\ML\Embedders\Word2Vec;
-
+use Rubix\ML\Embedders\SoftmaxApproximations\NegativeSampling;
 use PHPUnit\Framework\TestCase;
 use InvalidArgumentException;
 
@@ -49,7 +49,7 @@ class Word2VecTest extends TestCase
             ['the quick dog runs fast']
         ]);
 
-        $this->embedder = new Word2Vec('neg', 2, 100, 0, .05, 1000, 1);
+        $this->embedder = new Word2Vec(100, new NegativeSampling(), 2, 0, .05, 1000, 1);
 
         srand(self::RANDOM_SEED);
     }
@@ -77,7 +77,7 @@ class Word2VecTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new Word2Vec('neg', 2, 0);
+        new Word2Vec(0, new NegativeSampling(), 2);
     }
 
     /**
@@ -95,10 +95,23 @@ class Word2VecTest extends TestCase
     /**
      * @test
      */
+    public function continuousIncompatibility() : void
+    {
+        $samples = [[0], [1]];
+        $dataset = new Unlabeled($samples);
+        $embedder = $this->embedder;
+
+        $this->expectException(InvalidArgumentException::class);
+        $embedder->fit($dataset);
+    }
+
+    /**
+     * @test
+     */
     public function params() : void
     {
         $expected = [
-            'layer' => 'neg',
+            'layer' => new NegativeSampling(),
             'window' => 2,
             'dimensions' => 100,
             'sample_rate' => 0,
