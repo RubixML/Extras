@@ -80,7 +80,6 @@ class HierarchicalSoftmax implements SoftmaxApproximation
     public function wordIndices(array $predictWord) : array
     {
         return $this->vocab[$predictWord['word']]['point'];
-        //return $predictWord['point'];
     }
 
     /**
@@ -106,21 +105,21 @@ class HierarchicalSoftmax implements SoftmaxApproximation
     private function buildHeap(array $vocabulary) : array
     {
         $heap = new Heap($vocabulary);
-        $maxRange = (count($vocabulary) - 2);
+        $vocabCount = count($vocabulary);
 
-        for ($i = 0; $i <= $maxRange; ++$i) {
+        for ($i = 0; $i <= ($vocabCount - 2); ++$i) {
             $min1 = $heap->heappop();
             $min2 = $heap->heappop();
 
             if (!empty($min1) && !empty($min2)) {
-                $new_item = [
-                    'count' => ($min1['count'] + $min2['count']),
-                    'index' => ($i + (count($vocabulary))),
+                $newItem = [
+                    'count' => $min1['count'] + $min2['count'],
+                    'index' => $i + $vocabCount,
                     'left' => $min1,
                     'right' => $min2
                 ];
 
-                $heap->heappush($new_item);
+                $heap->heappush($newItem);
             }
         }
 

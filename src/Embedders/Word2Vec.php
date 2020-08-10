@@ -175,7 +175,7 @@ class Word2Vec implements Embedder, Stateful
     protected $sigmoid;
 
     /**
-     * @param SoftmaxApproximation $approximation
+     * @param SoftmaxApproximation|null $approximation
      * @param int $window
      * @param int $dimensions
      * @param float $sampleRate

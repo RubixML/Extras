@@ -67,7 +67,7 @@ class NegativeSampling implements SoftmaxApproximation
         $index2word = $word2vec->index2Word();
         $this->negLabels = Vector::quick([1, 0]);
 
-        $domain = ((2 ** 31) - 1);
+        $domain = (2 ** 31) - 1;
         $trainWordsPow = $cumulative = 0;
         $cumTable = array_fill(0, $vocabCount, 0);
 
