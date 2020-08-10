@@ -4,6 +4,7 @@ namespace Rubix\ML\Embedders;
 
 use Rubix\ML\DataType;
 use Rubix\ML\Datasets\Dataset;
+use Rubix\ML\Datasets\Unlabeled;
 use Rubix\ML\Other\Helpers\Params;
 use Rubix\ML\NeuralNet\ActivationFunctions\Sigmoid;
 use Rubix\ML\Specifications\DatasetIsNotEmpty;
@@ -193,10 +194,6 @@ class Word2Vec implements Embedder, Stateful
         int $epochs = 10,
         int $minCount = 2
     ) {
-        if (!$approximation instanceof SoftmaxApproximation) {
-            throw new InvalidArgumentException('Layer must be neg or hs.');
-        }
-
         if ($window > 5) {
             throw new InvalidArgumentException("Window must be between 1 and 5, $window given.");
         }
@@ -379,7 +376,7 @@ class Word2Vec implements Embedder, Stateful
             throw new RuntimeException('Transformer has not been fitted.');
         }
 
-        //SamplesAreCompatibleWithTransformer::check($dataset, $this);
+        SamplesAreCompatibleWithTransformer::check(new Unlabeled($samples), $this);
 
         foreach ($samples as &$sample) {
             foreach ($sample as $i2 => $sentence) {
