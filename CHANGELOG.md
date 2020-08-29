@@ -1,3 +1,4 @@
 - Unreleased
+    - Implement BM25 TF-IDF Transformer
     - Added Lambda function Transformer
     - All objects implement Stringable interface
