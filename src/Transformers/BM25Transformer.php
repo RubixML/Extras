@@ -5,25 +5,23 @@ namespace Rubix\ML\Transformers;
 use Rubix\ML\DataType;
 use Rubix\ML\Datasets\Dataset;
 use Rubix\ML\Specifications\SamplesAreCompatibleWithTransformer;
+use InvalidArgumentException;
 use RuntimeException;
 use Stringable;
 
 use function is_null;
 
 /**
- * TF-IDF Transformer
+ * BM25 Transformer
  *
- * Term Frequency - Inverse Document Frequency is a measure of how important
- * a word is to a document. The TF-IDF value increases proportionally with
- * the number of times a word appears in a document and is offset by the
- * frequency of the word in the corpus.
+ * BM25 is a term frequency weighting scheme that takes term frequency (TF) saturation and
+ * document length into account.
  *
- * > **Note**: This transformer assumes that its input is made up of word
- * frequency vectors such as those created by the Word Count Vectorizer.
+ * > **Note**: This transformer assumes that its input is made up of term frequency vectors
+ * such as those created by the Word Count Vectorizer.
  *
  * References:
- * [1] S. Robertson. (2003). Understanding Inverse Document Frequency: On
- * theoretical arguments for IDF.
+ * [1] S. Robertson et al. (2009). The Probabilistic Relevance Framework: BM25 and Beyond.
  *
  * @category    Machine Learning
  * @package     Rubix/ML
@@ -32,11 +30,18 @@ use function is_null;
 class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
 {
     /**
-     * The rate at which the TF values decay.
-     * 
-     * @var float 
+     * The term frequency (TF) normalization factor.
+     *
+     * @var float
      */
-    protected $termFrequencyDecay;
+    protected $alpha;
+
+    /**
+     * The importance of document length in normalizing term frequency.
+     *
+     * @var float
+     */
+    protected $beta;
 
     /**
      * The document frequencies of each word i.e. the number of times a word
@@ -47,18 +52,18 @@ class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
     protected $dfs;
 
     /**
-     * The number of tokens fitted so far.
-     * 
-     * @var int|null
-     */
-    protected $tokenCount;
-
-    /**
      * The inverse document frequency values for each feature column.
      *
      * @var float[]|null
      */
     protected $idfs;
+
+    /**
+     * The number of tokens fitted so far.
+     *
+     * @var int|null
+     */
+    protected $tokenCount;
 
     /**
      * The number of documents (samples) that have been fitted so far.
@@ -69,23 +74,30 @@ class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
 
     /**
      * The average token count per document.
-     * 
+     *
      * @var float|null
      */
     protected $averageDocumentLength;
 
     /**
-     * @param int $termFrequencyDecay
+     * @param float $alpha
+     * @param float $beta
      * @throws \InvalidArgumentException
      */
-    public function __construct(float $termFrequencyDecay = 0.0)
+    public function __construct(float $alpha = 1.2, float $beta = 0.75)
     {
-        if ($termFrequencyDecay < 0.0) {
+        if ($alpha < 0.0) {
             throw new InvalidArgumentException('Term frequency decay'
-                . " must be greater than 0, $termFrequencyDecay given.");
+                . " must be greater than 0, $alpha given.");
         }
 
-        $this->termFrequencyDecay = $termFrequencyDecay;
+        if ($beta < 0.0 or $beta > 1.0) {
+            throw new InvalidArgumentException('Beta must be between'
+                . " 0 and 1, $beta given.");
+        }
+
+        $this->alpha = $alpha;
+        $this->beta = $beta;
     }
 
     /**
@@ -107,7 +119,7 @@ class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
      */
     public function fitted() : bool
     {
-        return isset($this->idfs);
+        return $this->idfs and $this->averageDocumentLength;
     }
 
     /**
@@ -118,6 +130,16 @@ class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
     public function dfs() : ?array
     {
         return $this->dfs;
+    }
+
+    /**
+     * Return the average number of tokens per document.
+     *
+     * @return float|null
+     */
+    public function averageDocumentLength() : ?float
+    {
+        return $this->averageDocumentLength;
     }
 
     /**
@@ -162,15 +184,15 @@ class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
 
         $this->n += $dataset->numRows();
 
+        $this->averageDocumentLength = $this->tokenCount / $this->n;
+
         $idfs = [];
 
         foreach ($this->dfs as $df) {
-            $idfs[] = 1.0 + log($this->n / $df);
+            $idfs[] = log(1.0 + ($this->n - $df + 0.5) / ($df + 0.5));
         }
 
         $this->idfs = $idfs;
-        
-        $this->averageDocumentLength = $this->tokenCount / $this->n;
     }
 
     /**
@@ -186,17 +208,15 @@ class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
         }
 
         foreach ($samples as &$sample) {
-            if ($this->termFrequencyDecay > 0.0) {
-                $delta = array_sum($sample) / $this->averageDocumentLength;
+            $delta = array_sum($sample) / $this->averageDocumentLength;
 
-                $delta *= $this->termFrequencyDecay;
-            } else {
-                $delta = 0.0;
-            }
+            $delta = 1.0 - $this->beta + $this->beta * $delta;
+
+            $delta *= $this->alpha;
 
             foreach ($sample as $column => &$tf) {
                 if ($tf > 0) {
-                    $tf *= $tf / ($tf + $delta);
+                    $tf /= $tf + $delta;
                     $tf *= $this->idfs[$column];
                 }
             }
@@ -210,6 +230,6 @@ class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
      */
     public function __toString() : string
     {
-        return 'BM25 TF-IDF Transformer';
+        return "BM25 Transformer (alpha: {$this->alpha}, beta: {$this->beta})";
     }
 }
