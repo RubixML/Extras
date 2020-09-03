@@ -32,7 +32,7 @@ use function is_null;
  * @package     Rubix/ML
  * @author      Andrew DalPino
  */
-class DeltaTfIdfTransformer implements Elastic
+class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
 {
     /**
      * The class specific term frequencies of each word i.e. the number of
@@ -100,6 +100,16 @@ class DeltaTfIdfTransformer implements Elastic
     public function fitted() : bool
     {
         return $this->idfs and $this->entropies;
+    }
+
+    /**
+     * Return the document frequencies calculated during fitting.
+     *
+     * @return int[]|null
+     */
+    public function dfs() : ?array
+    {
+        return $this->dfs;
     }
 
     /**

@@ -95,6 +95,6 @@ class ISRU implements ActivationFunction
      */
     public function __toString() : string
     {
-        return "ISRU {alpha: {$this->alpha}}";
+        return "ISRU (alpha: {$this->alpha})";
     }
 }

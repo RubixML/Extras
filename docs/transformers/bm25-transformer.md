@@ -1,4 +1,4 @@
-<span style="float:right;"><a href="https://github.com/RubixML/RubixML/blob/master/src/Transformers/TfIdfTransformer.php">[source]</a></span>
+<span style="float:right;"><a href="https://github.com/RubixML/Extras/blob/master/src/Transformers/BM25Transformer.php">[source]</a></span>
 
 # BM25 Transformer
 BM25 is a term frequency weighting scheme that takes term frequency (TF) saturation and document length into account.
