@@ -14,18 +14,18 @@ Recursive Feature Eliminator or *RFE* is a supervised feature selector that uses
 | 2 | epochs | 1 | int | The maximum number of iterations to recurse upon the dataset. |
 | 3 | base | Auto | RanksFeatures | The base feature ranking learner instance. |
 
-## Additional Methods
-Return the final importances scores of the selected feature columns:
-``` php
-public importances() : ?array
-```
-
 ## Example
 ```php
 use Rubix\ML\Transformers\RecursiveFeatureEliminator;
 use Rubix\ML\Regressors\RegressionTree;
 
 $transformer = new RecursiveFeatureEliminator(10, 2, new RegressionTree());
+```
+
+## Additional Methods
+Return the final importances scores of the selected feature columns:
+``` php
+public importances() : ?array
 ```
 
 ### References

@@ -1,9 +1,9 @@
 <span style="float:right;"><a href="https://github.com/RubixML/Extras/blob/master/src/Transformers/BM25Transformer.php">[source]</a></span>
 
 # BM25 Transformer
-BM25 is a term frequency weighting scheme that takes term frequency (TF) saturation and document length into account.
+BM25 is a sublinear term frequency weighting scheme that takes term frequency (TF) saturation and document length into account.
 
-> **Note:** This transformer assumes that its input is made up of word frequency vectors such as those produced by [Word Count Vectorizer](word-count-vectorizer.md).
+> **Note:** BM25 Transformer assumes that its inputs are token frequency vectors such as those created by [Word Count Vectorizer](word-count-vectorizer.md).
 
 **Interfaces:** [Transformer](api.md#transformer), [Stateful](api.md#stateful), [Elastic](api.md#elastic)
 

@@ -14,11 +14,11 @@ use function is_null;
 /**
  * BM25 Transformer
  *
- * BM25 is a term frequency weighting scheme that takes term frequency (TF) saturation and
- * document length into account.
+ * BM25 is a sublinear term frequency weighting scheme that takes term frequency (TF)
+ * saturation and document length into account.
  *
- * > **Note**: This transformer assumes that its input is made up of term frequency vectors
- * such as those created by the Word Count Vectorizer.
+ * > **Note**: BM25 Transformer assumes that its inputs are made up of token frequency
+ * vectors such as those created by the Word Count Vectorizer.
  *
  * References:
  * [1] S. Robertson et al. (2009). The Probabilistic Relevance Framework: BM25 and Beyond.

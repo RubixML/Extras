@@ -19,8 +19,8 @@ use function is_null;
  * that receive the highest boost are those whose concentration is primarily in one
  * class whereas low weighted terms are more evenly distributed among the classes.
  *
- * > **Note**: This transformer assumes that its input is made up of word frequency
- * vectors such as those created by the Word Count Vectorizer.
+ * > **Note**: Delta TF-IDF Transformer assumes that its inputs are made up of token
+ * frequency vectors such as those created by the Word Count Vectorizer.
  *
  * References:
  * [1] J. Martineau et al. (2009). Delta TFIDF: An Improved Feature Space for

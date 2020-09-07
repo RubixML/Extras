@@ -1,3 +1,6 @@
+- Unreleased
+    - Implemented Token Hashing Vectorizer transformer
+
 - 0.1.0-beta
     - Add Recursive Feature Eliminator feature selector
     - Implement BM25 TF-IDF Transformer
