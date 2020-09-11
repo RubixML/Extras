@@ -3,11 +3,11 @@
 namespace Rubix\ML\Persisters;
 
 use Rubix\ML\Encoding;
+use Rubix\ML\Other\Helpers\Reflection;
 use Rubix\ML\Persistable;
 use Rubix\ML\Other\Helpers\Params;
 use Rubix\ML\Persisters\Serializers\Native;
 use Rubix\ML\Persisters\Serializers\Serializer;
-use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\FilesystemException;
 use RuntimeException;
@@ -91,28 +91,32 @@ class Flysystem implements Persister, Stringable
      */
     public function save(Persistable $persistable) : void
     {
-        if ($this->history and $this->filesystem->fileExists($this->path)) {
-            $timestamp = (string) time();
+        try {
+            if ($this->history and $this->filesystem->fileExists($this->path)) {
+                $timestamp = (string) time();
 
-            $filename = "{$this->path}-$timestamp." . self::HISTORY_EXT;
+                $filename = "{$this->path}-$timestamp." . self::HISTORY_EXT;
 
-            $num = 0;
+                $num = 0;
 
-            while ($this->filesystem->fileExists($filename)) {
-                $filename = "{$this->path}-$timestamp-" . ++$num . '.' . self::HISTORY_EXT;
-            }
+                while ($this->filesystem->fileExists($filename)) {
+                    $filename = "{$this->path}-$timestamp-" . ++$num . '.' . self::HISTORY_EXT;
+                }
 
-            try {
                 $this->filesystem->move($this->path, $filename);
-            } catch (FilesystemException $e) {
-                throw new RuntimeException("Failed to create history file '$filename'.");
             }
+        } catch (FilesystemException $e) {
+            throw new RuntimeException('Failed to create history file.');
         }
 
         $encoding = $this->serializer->serialize($persistable);
 
+        if ($encoding->bytes() === 0) {
+            throw new RuntimeException("Cannot save empty encoding to {$this->path}");
+        }
+
         try {
-            $this->filesystem->write($this->path, $encoding);
+            $this->filesystem->write($this->path, $encoding->data());
         } catch (FilesystemException $e) {
             throw new RuntimeException('Could not write to filesystem.');
         }
@@ -126,10 +130,6 @@ class Flysystem implements Persister, Stringable
      */
     public function load() : Persistable
     {
-        if (!$this->filesystem->fileExists($this->path)) {
-            throw new RuntimeException("File does not exist at {$this->path}.");
-        }
-
         try {
             $data = $this->filesystem->read($this->path);
         } catch (FilesystemException $e) {
@@ -152,9 +152,13 @@ class Flysystem implements Persister, Stringable
      */
     public function __toString() : string
     {
-        return "Flysystem (path: {$this->path}, filesystem: "
-            . Params::toString($this->filesystem) . ', history: '
-            . Params::toString($this->history) . ', serializer: '
-            . "{$this->serializer})";
+        $params = [
+            'path' => $this->path,
+            'adapter' => Reflection::property($this->filesystem, 'adapter'),
+            'history' => $this->history,
+            'serializer' => $this->serializer,
+        ];
+
+        return 'Flysystem (' . Params::stringify($params) . ')';
     }
 }

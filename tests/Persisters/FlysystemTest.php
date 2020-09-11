@@ -25,7 +25,7 @@ class FlysystemTest extends TestCase
      *
      * @var string
      */
-    const PATH = __DIR__ . '/path/to/test.persistable';
+    const PATH = '/path/to/test.persistable';
 
     /**
      * @var \League\Flysystem\FilesystemOperator
