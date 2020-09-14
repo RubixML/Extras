@@ -35,7 +35,7 @@ class DeltaTfIdfTransformerTest extends TestCase
             [0, 0, 2, 1, 0, 1, 1, 1, 0, 0, 0, 1],
         ], ['pos', 'pos', 'pos', 'neg', 'neg']);
 
-        $this->transformer = new DeltaTfIdfTransformer();
+        $this->transformer = new DeltaTfIdfTransformer(1.0);
     }
 
     /**

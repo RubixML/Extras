@@ -35,6 +35,14 @@ use function is_null;
 class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
 {
     /**
+     * The amount of additive (Laplace) smoothing to add to the inverse document
+     * frequencies (IDFs).
+     *
+     * @var float
+     */
+    protected $smoothing;
+
+    /**
      * The class specific term frequencies of each word i.e. the number of
      * times a word appears in the context of a class label.
      *
@@ -79,6 +87,19 @@ class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
      * @var float[]|null
      */
     protected $entropies;
+
+    /**
+     * @param float $smoothing
+     */
+    public function __construct(float $smoothing = 1.0)
+    {
+        if ($smoothing <= 0.0) {
+            throw new InvalidArgumentException('Smoothing must be'
+                . " greater than 0, $smoothing given.");
+        }
+
+        $this->smoothing = $smoothing;
+    }
 
     /**
      * Return the data types that this transformer is compatible with.
@@ -127,11 +148,11 @@ class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
 
         $classes = $dataset->possibleOutcomes();
 
-        $ones = array_fill(0, $dataset->numColumns(), 1);
+        $zeros = array_fill(0, $dataset->numColumns(), 0);
 
-        $this->tfs = array_fill_keys($classes, $ones);
-        $this->dfs = $this->totals = $ones;
-        $this->n = 1;
+        $this->tfs = array_fill_keys($classes, $zeros);
+        $this->dfs = $this->totals = $zeros;
+        $this->n = 0;
 
         $this->update($dataset);
     }
@@ -148,7 +169,7 @@ class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
                 . ' labeled training set.');
         }
 
-        SamplesAreCompatibleWithTransformer::check($dataset, $this);
+        SamplesAreCompatibleWithTransformer::with($dataset, $this)->check();
 
         if (is_null($this->tfs) or is_null($this->dfs)) {
             $this->fit($dataset);
@@ -176,17 +197,19 @@ class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
 
         $this->n += $dataset->numRows();
 
+        $nHat = $this->n + $this->smoothing;
+
         $idfs = [];
 
         foreach ($this->dfs as $df) {
-            $idfs[] = 1.0 + log($this->n / $df);
+            $idfs[] = 1.0 + log($nHat / ($df + $this->smoothing));
         }
 
         $entropies = array_fill(0, count($this->totals), 0.0);
 
         foreach ($this->tfs as $tfs) {
             foreach ($tfs as $column => $tf) {
-                $delta = $tf / $this->totals[$column];
+                $delta = ($tf + $this->smoothing) / ($this->totals[$column] + $this->smoothing);
 
                 $entropies[$column] += -$delta * log($delta);
             }
@@ -225,6 +248,6 @@ class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
      */
     public function __toString() : string
     {
-        return 'Delta TF-IDF Transformer';
+        return "Delta TF-IDF Transformer (smoothing: {$this->smoothing})";
     }
 }

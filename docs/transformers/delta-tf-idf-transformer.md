@@ -10,13 +10,15 @@ A supervised TF-IDF (Term Frequency Inverse Document Frequency) Transformer that
 **Data Type Compatibility:** Continuous only
 
 ## Parameters
-This transformer does not have any parameters.
+| # | Param | Default | Type | Description |
+|---|---|---|---|---|
+| 1 | smoothing | 1.0 | float | The amount of additive (Laplace) smoothing to add to the term frequencies and inverse document frequencies (IDFs). |
 
 ## Example
 ```php
 use Rubix\ML\Transformers\DeltaTfIdfTransformer;
 
-$transformer = new DeltaTfIdfTransformer();
+$transformer = new DeltaTfIdfTransformer(1.0);
 ```
 
 ## Additional Methods

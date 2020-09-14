@@ -9,6 +9,7 @@ use Rubix\ML\Regressors\Ridge;
 use Rubix\ML\Datasets\Unlabeled;
 use Rubix\ML\Other\Helpers\Params;
 use Rubix\ML\Backends\Tasks\Proba;
+use Rubix\ML\Other\Helpers\Verifier;
 use Rubix\ML\Backends\Tasks\Predict;
 use Rubix\ML\Other\Traits\LoggerAware;
 use Rubix\ML\Other\Traits\PredictsSingle;
@@ -241,13 +242,13 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
                 . ' Labeled training set.');
         }
 
-        DatasetIsNotEmpty::check($dataset);
-        SamplesAreCompatibleWithEstimator::check($dataset, $this);
+        Verifier::check([
+            DatasetIsNotEmpty::with($dataset),
+            SamplesAreCompatibleWithEstimator::with($dataset, $this),
+        ]);
 
         if ($this->logger) {
-            $this->logger->info('Learner init ' . Params::stringify($this->params()));
-
-            $this->logger->info('Training started');
+            $this->logger->info("$this initialized");
         }
 
         [$left, $right] = $dataset->labelType()->isCategorical()

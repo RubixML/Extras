@@ -1,5 +1,7 @@
-- Unreleased
+- 0.2.0-beta1
     - Implemented Token Hashing Vectorizer transformer
+    - Move Recursive Feature Eliminator (RFE) to main repo
+    - Added Laplace smoothing to Delta TF-IDF Transformer
 
 - 0.1.0-beta
     - Add Recursive Feature Eliminator feature selector

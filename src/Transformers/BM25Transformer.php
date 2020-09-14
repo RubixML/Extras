@@ -164,7 +164,7 @@ class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
      */
     public function update(Dataset $dataset) : void
     {
-        SamplesAreCompatibleWithTransformer::check($dataset, $this);
+        SamplesAreCompatibleWithTransformer::with($dataset, $this)->check();
 
         if (is_null($this->dfs) or is_null($this->n)) {
             $this->fit($dataset);
