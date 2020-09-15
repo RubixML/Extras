@@ -15,6 +15,16 @@ class BM25TransformerBench
     protected const NUM_SAMPLES = 10000;
 
     /**
+     * @var \Rubix\ML\Datasets\Unlabeled
+     */
+    public $dataset;
+
+    /**
+     * @var \Rubix\ML\Transformers\BM25Transformer
+     */
+    protected $transformer;
+
+    /**
      * @var array[]
      */
     protected $aSamples;
