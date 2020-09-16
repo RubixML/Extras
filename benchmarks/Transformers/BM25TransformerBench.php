@@ -17,7 +17,7 @@ class BM25TransformerBench
     /**
      * @var \Rubix\ML\Datasets\Unlabeled
      */
-    public $dataset;
+    protected $dataset;
 
     /**
      * @var \Rubix\ML\Transformers\BM25Transformer
