@@ -200,6 +200,6 @@ class AlphaDropout implements Hidden
      */
     public function __toString() : string
     {
-        return "Alpha Dropout {ratio: {$this->ratio}}";
+        return "Alpha Dropout (ratio: {$this->ratio})";
     }
 }

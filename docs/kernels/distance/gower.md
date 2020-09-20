@@ -16,11 +16,7 @@ A robust distance kernel that measures a mix of categorical and continuous data 
 ```php
 use Rubix\ML\Kernels\Distance\Gower;
 
-$kernel = new Gower(); // Continuous features between 0 and 1
-
-$kernel = new Gower(2.0); // Between -1 and 1
-
-$kernel = new Gower(1000.0); // Between 0 and 1000
+$kernel = new Gower(2.0);
 ```
 
 ### References

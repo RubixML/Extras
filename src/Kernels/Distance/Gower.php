@@ -117,6 +117,6 @@ class Gower implements Distance, NaNSafe
      */
     public function __toString() : string
     {
-        return "Gower {range: {$this->range}}";
+        return "Gower (range: {$this->range})";
     }
 }

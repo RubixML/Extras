@@ -5,8 +5,9 @@
     "homepage": "https://rubixml.com",
     "license": "MIT",
     "keywords": [
-        "php", "machine-learning", "rubix", "ml", "extras", "neural-network", "deep-learning",
-        "analytics", "data-mining"
+        "php", "machine learning", "rubix", "ml", "extras", "neural network", "deep learning",
+        "analytics", "data mining", "php-ml", "php ml", "php ai", "artificial intelligence",
+        "ai", "rubixml", "rubix ml"
     ],
     "authors": [
         {
@@ -16,12 +17,14 @@
     ],
     "require": {
         "php": ">=7.2",
-        "rubix/ml": "^0.1.0-rc3",
+        "rubix/ml": "^0.2.0",
         "rubix/tensor": "^2.0.4",
-        "wamania/php-stemmer": "^2.0"
+        "wamania/php-stemmer": "^2.0",
+        "league/flysystem": "2.0.0-beta.3"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "2.16.*",
+        "league/flysystem-memory": "2.0.0-beta.3",
         "phpbench/phpbench": "0.17.*",
         "phpstan/phpstan": "0.12.*",
         "phpstan/phpstan-phpunit": "0.12.*",
