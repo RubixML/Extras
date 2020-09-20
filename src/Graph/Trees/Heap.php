@@ -12,7 +12,7 @@ use InvalidArgumentException;
  * is greater than or equal to the key of C. In a min heap, the key of P is less than or equal to the key of C.
  *
  * References:
- * [1] Black (ed.), Paul E. (2004-12-14)
+ * Black (ed.), Paul E. (2004-12-14) Dictionary of Algorithms and Data Structures
  * <https://xlinux.nist.gov/dads/HTML/heap.html>
  *
  * @category    Machine Learning
@@ -34,19 +34,15 @@ class Heap
      */
     public function __construct(array $x)
     {
-        if (!is_array($x)) {
-            throw new InvalidArgumentException('Heap requires a valid array.');
-        }
-
         $this->heap = $this->heapify($x);
     }
 
     /**
-     * Returns the heap.
+     * Returns the heap property.
      *
      * @return array[]
      */
-    public function heap() : array
+    public function getHeap() : array
     {
         return $this->heap;
     }
@@ -168,7 +164,7 @@ class Heap
         $this->heap = array_values($x);
         $n = count($this->heap);
 
-        $maxRange = (($n / 2) - 1);
+        $maxRange = ($n / 2) - 1;
 
         for ($i = $maxRange; $i >= 0; --$i) {
             $this->heap = $this->siftup($this->heap, ((int) $i));

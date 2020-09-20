@@ -7,7 +7,7 @@ use Rubix\ML\Graph\Trees\Heap;
 use Tensor\Vector;
 use InvalidArgumentException;
 
-class HierarchicalSoftmax implements SoftmaxApproximation
+class HierarchicalSoftmax implements SoftmaxApproximator
 {
     /**
      * An array containing each word in the corpus and it's respective index, count, and multiplier.
@@ -31,10 +31,6 @@ class HierarchicalSoftmax implements SoftmaxApproximation
      */
     public function structureSampling(Word2Vec $word2vec) : void
     {
-        if (!$word2vec instanceof Word2Vec) {
-            throw new InvalidArgumentException('Hierarchical Softmax requires a valid Word2Vec object to create binary tree.');
-        }
-
         $this->vocab = $word2vec->vocab();
         $vocabCount = $word2vec->vocabCount();
 
@@ -123,6 +119,6 @@ class HierarchicalSoftmax implements SoftmaxApproximation
             }
         }
 
-        return $heap->heap();
+        return $heap->getHeap();
     }
 }

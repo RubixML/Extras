@@ -5,7 +5,7 @@ namespace Rubix\ML\Embedders\SoftmaxApproximations;
 use Rubix\ML\Embedders\Word2Vec;
 use Tensor\Vector;
 
-interface SoftmaxApproximation
+interface SoftmaxApproximator
 {
     /**
      * Create sampling structure used in pair train approximation.

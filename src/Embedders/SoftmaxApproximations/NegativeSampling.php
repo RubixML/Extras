@@ -6,7 +6,7 @@ use Rubix\ML\Embedders\Word2Vec;
 use Tensor\Vector;
 use InvalidArgumentException;
 
-class NegativeSampling implements SoftmaxApproximation
+class NegativeSampling implements SoftmaxApproximator
 {
     /**
      * The negative sampling exponent.

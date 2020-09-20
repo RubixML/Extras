@@ -10,7 +10,7 @@ use Rubix\ML\NeuralNet\ActivationFunctions\Sigmoid;
 use Rubix\ML\Specifications\DatasetIsNotEmpty;
 use Rubix\ML\Transformers\Stateful;
 use Rubix\ML\Specifications\SamplesAreCompatibleWithTransformer;
-use Rubix\ML\Embedders\SoftmaxApproximations\SoftmaxApproximation;
+use Rubix\ML\Embedders\SoftmaxApproximations\SoftmaxApproximator;
 use Rubix\ML\Embedders\SoftmaxApproximations\NegativeSampling;
 use Tensor\Matrix;
 use Tensor\Vector;
@@ -24,7 +24,7 @@ use RuntimeException;
  * This implementation utilizes the skip-gram algorithm and hierarchical softmax or negative sampling.
  *
  * References:
- * [1] `Tomas Mikolov et al: Efficient Estimation of Word Representations
+ * `Tomas Mikolov et al: Efficient Estimation of Word Representations
  * in Vector Space <https://arxiv.org/pdf/1301.3781.pdf>`_, `Tomas Mikolov et al: Distributed Representations of Words
  * and Phrases and their Compositionality <https://arxiv.org/abs/1310.4546>`
  *
@@ -176,7 +176,7 @@ class Word2Vec implements Embedder, Stateful
     protected $sigmoid;
 
     /**
-     * @param SoftmaxApproximation|null $approximation
+     * @param SoftmaxApproximator|null $approximation
      * @param int $window
      * @param int $dimensions
      * @param float $sampleRate
@@ -187,19 +187,19 @@ class Word2Vec implements Embedder, Stateful
      */
     public function __construct(
         int $dimensions = 5,
-        ?SoftmaxApproximation $approximation = null,
+        ?SoftmaxApproximator $approximation = null,
         int $window = 2,
         float $sampleRate = 1e-3,
         float $alpha = 0.01,
         int $epochs = 10,
         int $minCount = 2
     ) {
-        if ($window > 5) {
-            throw new InvalidArgumentException("Window must be between 1 and 5, $window given.");
-        }
-
         if ($dimensions < 5) {
             throw new InvalidArgumentException("Dimensions must be greater than 4, $dimensions given.");
+        }
+
+        if ($window > 5) {
+            throw new InvalidArgumentException("Window must be between 1 and 5, $window given.");
         }
 
         if ($sampleRate < 0.0) {
@@ -219,8 +219,8 @@ class Word2Vec implements Embedder, Stateful
         }
 
         $this->approximation = $approximation ?? new NegativeSampling();
-        $this->window = $window;
         $this->dimensions = $dimensions;
+        $this->window = $window;        
         $this->sampleRate = $sampleRate;
         $this->alpha = $alpha;
         $this->epochs = $epochs;
@@ -279,8 +279,8 @@ class Word2Vec implements Embedder, Stateful
     {
         return [
             'layer' => $this->approximation,
-            'window' => $this->window,
             'dimensions' => $this->dimensions,
+            'window' => $this->window,            
             'sample_rate' => $this->sampleRate,
             'alpha' => $this->alpha,
             'epochs' => $this->epochs,
@@ -309,6 +309,10 @@ class Word2Vec implements Embedder, Stateful
         DatasetIsNotEmpty::check($dataset);
         SamplesAreCompatibleWithTransformer::check($dataset, $this);
 
+        if($dataset->numColumns() > 1){
+            throw new InvalidArgumentException("Only datasets with 1 column are supported.");
+        }
+
         $sentences = $dataset->column(0);
 
         $this->preprocess($sentences);
@@ -335,7 +339,7 @@ class Word2Vec implements Embedder, Stateful
      */
     public function wordVec(string $word, bool $useNorm = true) : ?Vector
     {
-        if (!array_key_exists($word, $this->vocab)) {
+        if (!isset($this->vocab[$word])) {
             return null;
         }
 
@@ -399,10 +403,10 @@ class Word2Vec implements Embedder, Stateful
      *
      * @param string[] $positive
      * @param string[] $negative
-     * @param int $top
+     * @param int|null $top
      * @return string[] $result
      */
-    public function mostSimilar(array $positive, array $negative = [], $top = 20) : array
+    public function mostSimilar(array $positive, array $negative = [], ?int $top = 20) : array
     {
         $positiveArray = $negativeArray = $allWords = $means = [];
 
@@ -433,7 +437,7 @@ class Word2Vec implements Embedder, Stateful
         $l2 = Matrix::stack($this->vectorsNorm);
         $dists = $mean->transpose()->matmul($l2->transpose())->asArray()[0];
 
-        arsort($dists, SORT_REGULAR);
+        arsort($dists);
 
         $result = [];
         foreach ($dists as $index => $weight) {
@@ -457,11 +461,11 @@ class Word2Vec implements Embedder, Stateful
         $wordIndices = $this->approximation->wordIndices($predictWord);
         $l2 = $this->layerMatrix($wordIndices);
         $fa = $this->propagateHidden($l2, $l1);
-        $gd = $this->approximation->gradientDescent($fa, $predictWord['word'], $this->alpha);
+        $gradient = $this->approximation->gradientDescent($fa, $predictWord['word'], $this->alpha);
 
-        $this->learnHidden($wordIndices, $gd, $l1);
+        $this->learnHidden($wordIndices, $gradient, $l1);
 
-        return $this->error->addMatrix($gd->matmul($l2))->rowAsVector(0);
+        return $this->error->addMatrix($gradient->matmul($l2))->rowAsVector(0);
     }
 
     /**
@@ -600,7 +604,7 @@ class Word2Vec implements Embedder, Stateful
                 $downsampleTotal += $v;
             }
 
-            $this->vocab[$w]['sample_int'] = round($wordProbability * (2 ** 32));
+            $this->vocab[$w]['sample_int'] = round($wordProbability * 2 ** 32);
         }
     }
 
@@ -629,12 +633,14 @@ class Word2Vec implements Embedder, Stateful
      */
     private function prepareWeights() : void
     {
+        $zeroVector = Vector::zeros($this->dimensions);
+
         for ($i = 0; $i < $this->vocabCount; ++$i) {
-            $this->syn1[] = Vector::zeros($this->dimensions);
+            $this->syn1[] = $zeroVector;
             $this->vectors[$i] = Vector::rand($this->dimensions)->subtractScalar(0.5)->divideScalar($this->dimensions);
         }
 
-        $this->error = Vector::zeros($this->dimensions);
+        $this->error = $zeroVector;
         $this->vectorsLockf = array_fill(0, $this->vocabCount, 1);
     }
 
@@ -670,12 +676,13 @@ class Word2Vec implements Embedder, Stateful
     private function wordVocabs(array $sentence) : array
     {
         $wordVocabs = [];
-        $rand = (rand() / getrandmax());
+        $rand = rand() / getrandmax();
+        $randMultiplier = $rand * self::RAND_MULTIPLIER;
 
         foreach ($sentence as $word) {
             $vocabItem = $this->vocab[$word] ?? false;
 
-            if (!empty($vocabItem) && $vocabItem['sample_int'] > ($rand * self::RAND_MULTIPLIER)) {
+            if (!empty($vocabItem) && $vocabItem['sample_int'] > $randMultiplier) {
                 $wordVocabs[] = $vocabItem;
             }
         }
@@ -742,11 +749,9 @@ class Word2Vec implements Embedder, Stateful
     private function learnHidden(array $wordIndices, Vector $g, Vector $l1) : void
     {
         $c = $g->outer($l1);
-        $count = 0;
 
-        foreach ($wordIndices as $index) {
-            $this->syn1[$index] = $this->syn1[$index]->addVector($c->rowAsVector($count));
-            ++$count;
+        foreach ($wordIndices as $i=>$index) {
+            $this->syn1[$index] = $this->syn1[$index]->addVector($c->rowAsVector($i));            
         }
     }
 
@@ -785,6 +790,6 @@ class Word2Vec implements Embedder, Stateful
      */
     public function __toString() : string
     {
-        return 't-SNE {' . Params::stringify($this->params()) . '}';
+        return 'Word2Vec {' . Params::stringify($this->params()) . '}';
     }
 }
