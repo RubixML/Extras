@@ -30,14 +30,14 @@ use function is_null;
 class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
 {
     /**
-     * The term frequency (TF) normalization factor.
+     * The term frequency (TF) saturation factor. Lower values will cause TF to saturate quicker.
      *
      * @var float
      */
     protected $alpha;
 
     /**
-     * The importance of document length in normalizing term frequency.
+     * The importance of document length in normalizing the term frequency.
      *
      * @var float
      */

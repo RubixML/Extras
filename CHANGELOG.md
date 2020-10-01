@@ -1,3 +1,6 @@
+- 0.2.0-beta2
+    - Implemented K Best feature selector
+
 - 0.2.0-beta1
     - Implemented Token Hashing Vectorizer transformer
     - Move Recursive Feature Eliminator (RFE) to main repo

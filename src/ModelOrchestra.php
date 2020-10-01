@@ -136,6 +136,7 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
                     $conductor = new SoftmaxClassifier();
 
                     break 1;
+
                 case EstimatorType::regressor():
                     $conductor = new Ridge();
 
