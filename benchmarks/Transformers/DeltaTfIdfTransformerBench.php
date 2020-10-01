@@ -18,7 +18,7 @@ class DeltaTfIdfTransformerBench
     /**
      * @var \Rubix\ML\Datasets\Labeled
      */
-    public $dataset;
+    protected $dataset;
 
     /**
      * @var \Rubix\ML\Transformers\DeltaTfIdfTransformer
