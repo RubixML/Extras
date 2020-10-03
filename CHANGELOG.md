@@ -1,7 +1,7 @@
-- 0.2.0-beta2
+- 0.2.1-beta
     - Implemented K Best feature selector
 
-- 0.2.0-beta1
+- 0.2.0-beta
     - Implemented Token Hashing Vectorizer transformer
     - Move Recursive Feature Eliminator (RFE) to main repo
     - Added Laplace smoothing to Delta TF-IDF Transformer
