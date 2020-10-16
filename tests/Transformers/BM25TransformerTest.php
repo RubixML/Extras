@@ -8,7 +8,7 @@ use Rubix\ML\Transformers\Stateful;
 use Rubix\ML\Transformers\Transformer;
 use Rubix\ML\Transformers\BM25Transformer;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
+use Rubix\ML\Exceptions\RuntimeException;
 
 /**
  * @group Transformers

@@ -6,7 +6,7 @@ use Rubix\ML\DataType;
 use Rubix\ML\Datasets\Dataset;
 use Rubix\ML\Other\Tokenizers\Word;
 use Rubix\ML\Other\Tokenizers\Tokenizer;
-use InvalidArgumentException;
+use Rubix\ML\Exceptions\InvalidArgumentException;
 use Stringable;
 
 use function count;
@@ -52,7 +52,7 @@ class TokenHashingVectorizer implements Transformer, Stringable
     /**
      * @param int $dimensions
      * @param \Rubix\ML\Other\Tokenizers\Tokenizer|null $tokenizer
-     * @throws \InvalidArgumentException
+     * @throws \Rubix\ML\Exceptions\InvalidArgumentException
      */
     public function __construct(int $dimensions, ?Tokenizer $tokenizer = null)
     {
