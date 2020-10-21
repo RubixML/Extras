@@ -26,6 +26,7 @@
         "friendsofphp/php-cs-fixer": "2.16.*",
         "league/flysystem-memory": "2.0.0-beta.3",
         "phpbench/phpbench": "0.17.*",
+        "phpstan/extension-installer": "^1.0",
         "phpstan/phpstan": "0.12.*",
         "phpstan/extension-installer": "^1.0",
         "phpstan/phpstan-phpunit": "0.12.*",
