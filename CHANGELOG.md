@@ -1,3 +1,6 @@
+- 0.3.0-beta
+    - Move K Best Selector to main repository
+
 - 0.2.1-beta
     - Implemented K Best feature selector
 
