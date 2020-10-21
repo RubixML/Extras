@@ -7,7 +7,6 @@ use Rubix\ML\Datasets\Dataset;
 use Rubix\ML\Other\Tokenizers\Word;
 use Rubix\ML\Other\Tokenizers\Tokenizer;
 use Rubix\ML\Exceptions\InvalidArgumentException;
-use Stringable;
 
 use function count;
 use function is_string;
@@ -26,7 +25,7 @@ use function is_string;
  * @package     Rubix/ML
  * @author      Andrew DalPino
  */
-class TokenHashingVectorizer implements Transformer, Stringable
+class TokenHashingVectorizer implements Transformer
 {
     /**
      * The maximum number of dimensions supported.

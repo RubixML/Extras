@@ -7,7 +7,6 @@ use Rubix\ML\Datasets\Dataset;
 use Rubix\ML\Specifications\SamplesAreCompatibleWithTransformer;
 use Rubix\ML\Exceptions\InvalidArgumentException;
 use Rubix\ML\Exceptions\RuntimeException;
-use Stringable;
 
 use function is_null;
 
@@ -27,7 +26,7 @@ use function is_null;
  * @package     Rubix/ML
  * @author      Andrew DalPino
  */
-class BM25Transformer implements Transformer, Stateful, Elastic, Stringable
+class BM25Transformer implements Transformer, Stateful, Elastic
 {
     /**
      * The term frequency (TF) saturation factor. Lower values will cause TF to saturate quicker.
