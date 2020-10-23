@@ -1,6 +1,6 @@
 <span style="float:right;"><a href="https://github.com/RubixML/Extras/blob/master/src/Persisters/Serializers/Gzip.php">[source]</a></span>
 
-# Native
+# Gzip
 A compression format based on the DEFLATE algorithm with a header and CRC32 checksum.
 
 ## Parameters
