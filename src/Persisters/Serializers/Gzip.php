@@ -4,6 +4,7 @@ namespace Rubix\ML\Persisters\Serializers;
 
 use Rubix\ML\Encoding;
 use Rubix\ML\Persistable;
+use Rubix\ML\Exceptions\RuntimeException;
 use Rubix\ML\Exceptions\InvalidArgumentException;
 
 /**
