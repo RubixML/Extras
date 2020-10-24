@@ -1,5 +1,5 @@
 - 0.3.0-beta
-    - Added Gzip serializer
+    - Added Gzip and Bzip2 serializers
     - Move K Best Selector to main repository
 
 - 0.2.1-beta

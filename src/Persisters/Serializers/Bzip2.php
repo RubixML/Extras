@@ -7,27 +7,36 @@ use Rubix\ML\Persistable;
 use Rubix\ML\Exceptions\RuntimeException;
 use Rubix\ML\Exceptions\InvalidArgumentException;
 
+use function is_string;
+
 /**
- * Gzip
+ * Bzip2
  *
- * A compression format based on the DEFLATE algorithm with a header and checksum.
+ * A compression format based on the Burrows–Wheeler algorithm. Bzip2 is slightly smaller than
+ * Gzip but is slower and requires more memory.
  *
  * References:
- * [1] P. Deutsch. (1996). RFC 1951 - DEFLATE Compressed Data Format Specification
- * version.
+ * [1] J. Tsai. (2006). Bzip2: Format Specification.
  *
  * @category    Machine Learning
  * @package     Rubix/ML
  * @author      Andrew DalPino
  */
-class Gzip implements Serializer
+class Bzip2 implements Serializer
 {
     /**
-     * The compression level between 0 and 9, 0 meaning no compression.
+     * The size of each block between 1 and 9 where 9 gives the best compression.
      *
      * @var int
      */
-    protected $level;
+    protected $blockSize;
+
+    /**
+     * Controls how the compression phase behaves when the input is highly repetitive.
+     *
+     * @var int
+     */
+    protected $workFactor;
 
     /**
      * The base serializer.
@@ -37,15 +46,21 @@ class Gzip implements Serializer
     protected $serializer;
 
     /**
-     * @param int $level
+     * @param int $blockSize
+     * @param int $workFactor
      * @param \Rubix\ML\Persisters\Serializers\Serializer|null $serializer
      * @throws \Rubix\ML\Exceptions\InvalidArgumentException
      */
-    public function __construct(int $level = 1, ?Serializer $serializer = null)
+    public function __construct(int $blockSize = 4, int $workFactor = 0, ?Serializer $serializer = null)
     {
-        if ($level < 0 or $level > 9) {
-            throw new InvalidArgumentException('Level must be'
-                . " between 0 and 9, $level given.");
+        if (!extension_loaded('bz2')) {
+            throw new RuntimeException('Bzip2 extension is not'
+                . ' loaded, check PHP configuration.');
+        }
+
+        if ($blockSize < 1 or $blockSize > 9) {
+            throw new InvalidArgumentException('Block size must'
+                . " be between 0 and 9, $blockSize given.");
         }
 
         if ($serializer instanceof self) {
@@ -53,7 +68,8 @@ class Gzip implements Serializer
                 . ' must not be an instance of itself.');
         }
 
-        $this->level = $level;
+        $this->blockSize = $blockSize;
+        $this->workFactor = $workFactor;
         $this->serializer = $serializer ?? new Native();
     }
 
@@ -67,9 +83,9 @@ class Gzip implements Serializer
     {
         $encoding = $this->serializer->serialize($persistable);
 
-        $data = gzencode((string) $encoding, $this->level);
+        $data = bzcompress((string) $encoding, $this->blockSize, $this->workFactor);
 
-        if ($data === false) {
+        if (!is_string($data)) {
             throw new RuntimeException('Failed to compress data.');
         }
 
@@ -85,9 +101,9 @@ class Gzip implements Serializer
      */
     public function unserialize(Encoding $encoding) : Persistable
     {
-        $data = gzdecode((string) $encoding);
+        $data = bzdecompress((string) $encoding);
 
-        if ($data === false) {
+        if (!is_string($data)) {
             throw new RuntimeException('Failed to decompress data.');
         }
 
@@ -101,6 +117,7 @@ class Gzip implements Serializer
      */
     public function __toString() : string
     {
-        return "Gzip (level: {$this->level}, serializer: {$this->serializer})";
+        return "Bzip2 (block size: {$this->blockSize}, work factor: {$this->workFactor},"
+            . " serializer: {$this->serializer})";
     }
 }
