@@ -10,5 +10,8 @@ $ composer require rubix/extras
 ### Requirements
 - [PHP](https://php.net/manual/en/install.php) 7.2 or above
 
+##### Optional
+- [Bzip2 extension](https://www.php.net/manual/en/book.bzip2.php) for Bzip2 compression
+
 ## License
 [MIT](https://github.com/RubixML/Extras/blob/master/LICENSE.md)

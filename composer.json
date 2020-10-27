@@ -17,7 +17,7 @@
     ],
     "require": {
         "php": ">=7.2",
-        "rubix/ml": "^0.2.0",
+        "rubix/ml": "0.3.0.x-dev",
         "rubix/tensor": "^2.0.4",
         "wamania/php-stemmer": "^2.0",
         "league/flysystem": "2.0.0-beta.3"
@@ -26,6 +26,7 @@
         "friendsofphp/php-cs-fixer": "2.16.*",
         "league/flysystem-memory": "2.0.0-beta.3",
         "phpbench/phpbench": "0.17.*",
+        "phpstan/extension-installer": "^1.0",
         "phpstan/phpstan": "0.12.*",
         "phpstan/phpstan-phpunit": "0.12.*",
         "phpunit/phpunit": "8.5.*"

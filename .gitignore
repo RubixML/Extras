@@ -1,7 +1,9 @@
 /vendor
 composer.lock
-*.model
 .phpunit.result.cache
 .php_cs.cache
-.vscode
-.vs
+Thumbs.db
+.DS_Store
+/.idea
+/.vscode
+/.vs

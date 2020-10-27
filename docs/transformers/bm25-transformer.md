@@ -12,8 +12,8 @@ BM25 is a sublinear term frequency weighting scheme that takes term frequency (T
 ## Parameters
 | # | Param | Default | Type | Description |
 |---|---|---|---|---|
-| 1 | alpha | 1.2 | float | The term frequency (TF) normalization factor. |
-| 2 | beta | 0.75 | float | The importance of document length in normalizing term frequency. |
+| 1 | alpha | 1.2 | float | The term frequency (TF) saturation factor. Lower values will cause TF to saturate quicker. |
+| 2 | beta | 0.75 | float | The importance of document length in normalizing the term frequency. |
 
 ## Example
 ```php
