@@ -1,9 +1,9 @@
 <?php
 
-namespace Rubix\ML\Embedders\SoftmaxApproximations;
+namespace Rubix\ML\Embedders\SoftmaxApproximators;
 
 use Rubix\ML\Embedders\Word2Vec;
-use Rubix\ML\Graph\Trees\Heap;
+use Rubix\ML\Graph\Trees\HeapQueue;
 use Tensor\Vector;
 use InvalidArgumentException;
 
@@ -100,12 +100,12 @@ class HierarchicalSoftmax implements SoftmaxApproximator
      */
     private function buildHeap(array $vocabulary) : array
     {
-        $heap = new Heap($vocabulary);
+        $heap = new HeapQueue($vocabulary);
         $vocabCount = count($vocabulary);
 
         for ($i = 0; $i <= ($vocabCount - 2); ++$i) {
-            $min1 = $heap->heappop();
-            $min2 = $heap->heappop();
+            $min1 = $heap->pop();
+            $min2 = $heap->pop();
 
             if (!empty($min1) && !empty($min2)) {
                 $newItem = [
@@ -115,7 +115,7 @@ class HierarchicalSoftmax implements SoftmaxApproximator
                     'right' => $min2
                 ];
 
-                $heap->heappush($newItem);
+                $heap->push($newItem);
             }
         }
 

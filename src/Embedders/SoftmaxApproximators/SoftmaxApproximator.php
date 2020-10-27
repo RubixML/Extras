@@ -1,6 +1,6 @@
 <?php
 
-namespace Rubix\ML\Embedders\SoftmaxApproximations;
+namespace Rubix\ML\Embedders\SoftmaxApproximators;
 
 use Rubix\ML\Embedders\Word2Vec;
 use Tensor\Vector;

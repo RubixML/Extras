@@ -5,7 +5,7 @@ namespace Rubix\ML\Tests\Embedders;
 use Rubix\ML\DataType;
 use Rubix\ML\Datasets\Unlabeled;
 use Rubix\ML\Embedders\Word2Vec;
-use Rubix\ML\Embedders\SoftmaxApproximations\NegativeSampling;
+use Rubix\ML\Embedders\SoftmaxApproximators\NegativeSampling;
 use PHPUnit\Framework\TestCase;
 use InvalidArgumentException;
 
@@ -15,12 +15,6 @@ use InvalidArgumentException;
  */
 class Word2VecTest extends TestCase
 {
-    /**
-     * The number of samples in the validation set.
-     *
-     * @var int
-     */
-    protected const DATASET_SIZE = 2;
 
     /**
      * Constant used to see the random number generator.

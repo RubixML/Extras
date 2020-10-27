@@ -19,7 +19,7 @@ use InvalidArgumentException;
  * @package     RubixML
  * @author      Rich Davis
  */
-class Heap
+class HeapQueue
 {
     /**
      * An array of words from a corpus arranged in a manner that maintains the heap invariant.
@@ -52,7 +52,7 @@ class Heap
      *
      * @return mixed[]|null
      */
-    public function heappop() : ?array
+    public function pop() : ?array
     {
         if (!is_array($this->heap) or empty($this->heap)) {
             return null;
@@ -78,7 +78,7 @@ class Heap
      * @param mixed[] $item
      * @return mixed[]
      */
-    public function heappush(array $item) : array
+    public function push(array $item) : array
     {
         $this->heap[] = $item;
         $new_count = (count($this->heap) - 1);

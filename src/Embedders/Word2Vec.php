@@ -10,8 +10,8 @@ use Rubix\ML\NeuralNet\ActivationFunctions\Sigmoid;
 use Rubix\ML\Specifications\DatasetIsNotEmpty;
 use Rubix\ML\Transformers\Stateful;
 use Rubix\ML\Specifications\SamplesAreCompatibleWithTransformer;
-use Rubix\ML\Embedders\SoftmaxApproximations\SoftmaxApproximator;
-use Rubix\ML\Embedders\SoftmaxApproximations\NegativeSampling;
+use Rubix\ML\Embedders\SoftmaxApproximators\SoftmaxApproximator;
+use Rubix\ML\Embedders\SoftmaxApproximators\NegativeSampling;
 use Tensor\Matrix;
 use Tensor\Vector;
 use InvalidArgumentException;
@@ -114,7 +114,7 @@ class Word2Vec implements Embedder, Stateful
     /**
      * The approximation sampling algorithm.
      *
-     * @var SoftmaxApproximation
+     * @var SoftmaxApproximator
      */
     protected $approximation;
 
