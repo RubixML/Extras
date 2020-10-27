@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @group Serializers
+ * @requires extension bz2
  * @covers \Rubix\ML\Persisters\Serializers\Bzip2
  */
 class Bzip2Test extends TestCase
