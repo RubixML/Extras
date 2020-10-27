@@ -15,7 +15,6 @@ use InvalidArgumentException;
  */
 class Word2VecTest extends TestCase
 {
-
     /**
      * Constant used to see the random number generator.
      *

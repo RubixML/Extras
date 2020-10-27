@@ -5,7 +5,6 @@ namespace Rubix\ML\Embedders\SoftmaxApproximators;
 use Rubix\ML\Embedders\Word2Vec;
 use Rubix\ML\Graph\Trees\HeapQueue;
 use Tensor\Vector;
-use InvalidArgumentException;
 
 class HierarchicalSoftmax implements SoftmaxApproximator
 {

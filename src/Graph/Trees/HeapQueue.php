@@ -2,8 +2,6 @@
 
 namespace Rubix\ML\Graph\Trees;
 
-use InvalidArgumentException;
-
 /**
  * Heap
  *

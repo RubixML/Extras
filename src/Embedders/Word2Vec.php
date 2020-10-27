@@ -220,7 +220,7 @@ class Word2Vec implements Embedder, Stateful
 
         $this->approximation = $approximation ?? new NegativeSampling();
         $this->dimensions = $dimensions;
-        $this->window = $window;        
+        $this->window = $window;
         $this->sampleRate = $sampleRate;
         $this->alpha = $alpha;
         $this->epochs = $epochs;
@@ -280,7 +280,7 @@ class Word2Vec implements Embedder, Stateful
         return [
             'layer' => $this->approximation,
             'dimensions' => $this->dimensions,
-            'window' => $this->window,            
+            'window' => $this->window,
             'sample_rate' => $this->sampleRate,
             'alpha' => $this->alpha,
             'epochs' => $this->epochs,
@@ -306,11 +306,14 @@ class Word2Vec implements Embedder, Stateful
      */
     public function fit(Dataset $dataset) : void
     {
-        DatasetIsNotEmpty::check($dataset);
-        SamplesAreCompatibleWithTransformer::check($dataset, $this);
+        $dataSetIsNotEmpty = new DatasetIsNotEmpty($dataset);
+        $dataSetIsNotEmpty->check();
 
-        if($dataset->numColumns() > 1){
-            throw new InvalidArgumentException("Only datasets with 1 column are supported.");
+        $samplesAreCompatibleWithTransformer = new SamplesAreCompatibleWithTransformer($dataset, $this);
+        $samplesAreCompatibleWithTransformer->check();
+
+        if ($dataset->numColumns() > 1) {
+            throw new InvalidArgumentException('Only datasets with 1 column are supported.');
         }
 
         $sentences = $dataset->column(0);
@@ -380,13 +383,15 @@ class Word2Vec implements Embedder, Stateful
             throw new RuntimeException('Transformer has not been fitted.');
         }
 
-        SamplesAreCompatibleWithTransformer::check(new Unlabeled($samples), $this);
+        $samplesAreCompatibleWithTransformer = new SamplesAreCompatibleWithTransformer(new Unlabeled($samples), $this);
+        $samplesAreCompatibleWithTransformer->check();
 
         foreach ($samples as &$sample) {
             foreach ($sample as $i2 => $sentence) {
                 $preppedSentence = $this->prepSentence($sentence);
 
                 $embeddings = [];
+
                 foreach ($preppedSentence as $word) {
                     $embeddings[] = $this->embedWord($word);
                 }
@@ -440,6 +445,7 @@ class Word2Vec implements Embedder, Stateful
         arsort($dists);
 
         $result = [];
+
         foreach ($dists as $index => $weight) {
             if (!in_array($index, $allWords)) {
                 $result[$this->index2word[$index]] = $weight;
@@ -575,6 +581,7 @@ class Word2Vec implements Embedder, Stateful
         if (!$this->sampleRate) {
             return $retainTotal;
         }
+
         if ($this->sampleRate < 1) {
             return $this->sampleRate * $retainTotal;
         }
@@ -750,8 +757,8 @@ class Word2Vec implements Embedder, Stateful
     {
         $c = $g->outer($l1);
 
-        foreach ($wordIndices as $i=>$index) {
-            $this->syn1[$index] = $this->syn1[$index]->addVector($c->rowAsVector($i));            
+        foreach ($wordIndices as $i => $index) {
+            $this->syn1[$index] = $this->syn1[$index]->addVector($c->rowAsVector($i));
         }
     }
 
