@@ -81,18 +81,18 @@ class Gower implements Distance, NaNSafe
                 case is_float($valueA) and is_nan($valueA):
                     ++$nn;
 
-                    break 1;
+                    break;
 
                 case is_float($valueB) and is_nan($valueB):
                     ++$nn;
 
-                    break 1;
+                    break;
 
                 case !is_string($valueA) and !is_string($valueB):
                     $distance += abs($valueA - $valueB)
                         / $this->range;
 
-                    break 1;
+                    break;
 
                 default:
                     if ($valueA !== $valueB) {

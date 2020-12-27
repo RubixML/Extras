@@ -117,12 +117,12 @@ class KBestSelector implements Transformer, Stateful
                 case DataType::categorical():
                     $this->estimator = new ClassificationTree();
 
-                    break 1;
+                    break;
 
                 case DataType::continuous():
                     $this->estimator = new RegressionTree();
 
-                    break 1;
+                    break;
 
                 default:
                     throw new InvalidArgumentException('No compatible base'
