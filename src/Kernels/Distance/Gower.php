@@ -65,8 +65,8 @@ class Gower implements Distance, NaNSafe
     /**
      * Compute the distance between two vectors.
      *
-     * @param (string|int|float)[] $a
-     * @param (string|int|float)[] $b
+     * @param list<string|int|float> $a
+     * @param list<string|int|float> $b
      * @return float
      */
     public function compute(array $a, array $b) : float

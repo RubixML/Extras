@@ -1,5 +1,6 @@
 - 0.3.0-beta
     - Added Bzip2 serializers
+    - Added Levenshtein distance kernel
     - Move K Best Selector to main repository
     - Added custom exceptions from the main repo
 
