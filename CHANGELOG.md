@@ -1,6 +1,7 @@
 - 0.3.0-beta
-    - Added Gzip and Bzip2 serializers
+    - Added Bzip2 serializers
     - Move K Best Selector to main repository
+    - Added custom exceptions from the main repo
 
 - 0.2.1-beta
     - Implemented K Best feature selector

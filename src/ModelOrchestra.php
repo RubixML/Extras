@@ -135,12 +135,12 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
                 case EstimatorType::classifier():
                     $conductor = new SoftmaxClassifier();
 
-                    break 1;
+                    break;
 
                 case EstimatorType::regressor():
                     $conductor = new Ridge();
 
-                    break 1;
+                    break;
 
                 default:
                     $conductor = new Ridge();
