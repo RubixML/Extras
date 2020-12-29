@@ -13,6 +13,9 @@
         <testsuite name="Base">
             <directory>tests</directory>
         </testsuite>
+        <testsuite name="Graph">
+            <directory>tests/Graph</directory>
+        </testsuite>
         <testsuite name="NeuralNet">
             <directory>tests/NeuralNet</directory>
         </testsuite>
