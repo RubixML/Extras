@@ -14,4 +14,4 @@ $ composer require rubix/extras
 - [Bzip2 extension](https://www.php.net/manual/en/book.bzip2.php) for Bzip2 compression
 
 ## License
-[MIT](https://github.com/RubixML/Extras/blob/master/LICENSE.md)
+The code is licensed [MIT](LICENSE) and the documentation is licensed [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
