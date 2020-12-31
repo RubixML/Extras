@@ -22,6 +22,9 @@
         <testsuite name="Other">
             <directory>tests/Other</directory>
         </testsuite>
+        <testsuite name="Persisters">
+            <directory>tests/Persisters</directory>
+        </testsuite>
         <testsuite name="Transformers">
             <directory>tests/Transformers</directory>
         </testsuite>
