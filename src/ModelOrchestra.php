@@ -9,7 +9,6 @@ use Rubix\ML\Regressors\Ridge;
 use Rubix\ML\Datasets\Unlabeled;
 use Rubix\ML\Other\Helpers\Params;
 use Rubix\ML\Backends\Tasks\Proba;
-use Rubix\ML\Other\Helpers\Verifier;
 use Rubix\ML\Backends\Tasks\Predict;
 use Rubix\ML\Other\Traits\LoggerAware;
 use Rubix\ML\Other\Traits\PredictsSingle;
@@ -17,9 +16,10 @@ use Rubix\ML\Backends\Tasks\TrainLearner;
 use Rubix\ML\Other\Traits\Multiprocessing;
 use Rubix\ML\Classifiers\SoftmaxClassifier;
 use Rubix\ML\Specifications\DatasetIsNotEmpty;
+use Rubix\ML\Specifications\SpecificationChain;
 use Rubix\ML\Specifications\SamplesAreCompatibleWithEstimator;
-use InvalidArgumentException;
-use RuntimeException;
+use Rubix\ML\Exceptions\InvalidArgumentException;
+use Rubix\ML\Exceptions\RuntimeException;
 
 use function count;
 use function in_array;
@@ -71,7 +71,7 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
      * @param \Rubix\ML\Learner[] $members
      * @param \Rubix\ML\Learner|null $conductor
      * @param float $ratio
-     * @throws \InvalidArgumentException
+     * @throws \Rubix\ML\Exceptions\InvalidArgumentException
      */
     public function __construct(array $members, ?Learner $conductor = null, float $ratio = 0.8)
     {
@@ -234,7 +234,7 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
      * training set.
      *
      * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @throws \InvalidArgumentException
+     * @throws \Rubix\ML\Exceptions\InvalidArgumentException
      */
     public function train(Dataset $dataset) : void
     {
@@ -243,10 +243,10 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
                 . ' Labeled training set.');
         }
 
-        Verifier::check([
-            DatasetIsNotEmpty::with($dataset),
-            SamplesAreCompatibleWithEstimator::with($dataset, $this),
-        ]);
+        SpecificationChain::with([
+            new DatasetIsNotEmpty($dataset),
+            new SamplesAreCompatibleWithEstimator($dataset, $this),
+        ])->check();
 
         if ($this->logger) {
             $this->logger->info("$this initialized");
@@ -284,7 +284,7 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
      * Make predictions from a dataset.
      *
      * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @throws \RuntimeException
+     * @throws \Rubix\ML\Exceptions\RuntimeException
      * @return mixed[]
      */
     public function predict(Dataset $dataset) : array
@@ -302,7 +302,7 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
      * The callback that executes after the training task.
      *
      * @param \Rubix\ML\Learner $estimator
-     * @throws \RuntimeException
+     * @throws \Rubix\ML\Exceptions\RuntimeException
      */
     public function afterTrain(Learner $estimator) : void
     {

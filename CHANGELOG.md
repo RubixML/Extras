@@ -1,3 +1,11 @@
+- 0.3.0-beta
+    - Added Vantage Point Tree for spatial queries
+    - Added Bzip2 serializers
+    - Added Levenshtein distance kernel
+    - Move K Best Selector to main repository
+    - Added custom exceptions from the main repo
+    - Moved Flysystem Persister over to main repo
+
 - 0.2.1-beta
     - Implemented K Best feature selector
 

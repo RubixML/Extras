@@ -2,20 +2,19 @@
 
 namespace Rubix\ML\Tests\Kernels\Distance;
 
-use Rubix\ML\Kernels\Distance\Gower;
-use Rubix\ML\Kernels\Distance\NaNSafe;
+use Rubix\ML\Kernels\Distance\Levenshtein;
 use Rubix\ML\Kernels\Distance\Distance;
 use PHPUnit\Framework\TestCase;
 use Generator;
 
 /**
  * @group Distances
- * @covers \Rubix\ML\Kernels\Distance\Gower
+ * @covers \Rubix\ML\Kernels\Distance\Levenshtein
  */
-class GowerTest extends TestCase
+class LevenshteinTest extends TestCase
 {
     /**
-     * @var \Rubix\ML\Kernels\Distance\Gower
+     * @var \Rubix\ML\Kernels\Distance\Levenshtein
      */
     protected $kernel;
 
@@ -24,7 +23,7 @@ class GowerTest extends TestCase
      */
     protected function setUp() : void
     {
-        $this->kernel = new Gower(1.0);
+        $this->kernel = new Levenshtein();
     }
 
     /**
@@ -32,8 +31,7 @@ class GowerTest extends TestCase
      */
     public function build() : void
     {
-        $this->assertInstanceOf(Gower::class, $this->kernel);
-        $this->assertInstanceOf(NaNSafe::class, $this->kernel);
+        $this->assertInstanceOf(Levenshtein::class, $this->kernel);
         $this->assertInstanceOf(Distance::class, $this->kernel);
     }
 
@@ -41,8 +39,8 @@ class GowerTest extends TestCase
      * @test
      * @dataProvider computeProvider
      *
-     * @param list<string|int|float> $a
-     * @param list<string|int|float> $b
+     * @param list<string> $a
+     * @param list<string> $b
      * @param float $expected
      */
     public function compute(array $a, array $b, $expected) : void
@@ -58,10 +56,12 @@ class GowerTest extends TestCase
      */
     public function computeProvider() : Generator
     {
-        yield [['toast', 1.0, 0.5, NAN], ['pretzels', 1.0, 0.2, 0.1], 0.43333333333333335];
+        yield [['aaa'], ['aaaaaa'], 3.0];
 
-        yield [[0.0, 1.0, 0.5, 'ham'], [0.1, 0.9, 0.4, 'ham'], 0.07499999999999998];
+        yield [['toast', 'naan'], ['pretzels', 'pizza'], 12.0];
 
-        yield [[1, NAN, 1], [1, NAN, 1], 0.0];
+        yield [['Beef'], ['feeB'], 2.0];
+
+        yield [['Levenshtein'], ['Levanshtein'], 1.0];
     }
 }

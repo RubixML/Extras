@@ -3,7 +3,7 @@
 namespace Rubix\ML\Kernels\Distance;
 
 use Rubix\ML\DataType;
-use InvalidArgumentException;
+use Rubix\ML\Exceptions\InvalidArgumentException;
 
 use function count;
 
@@ -37,7 +37,7 @@ class Gower implements Distance, NaNSafe
 
     /**
      * @param float $range
-     * @throws \InvalidArgumentException
+     * @throws \Rubix\ML\Exceptions\InvalidArgumentException
      */
     public function __construct(float $range = 1.0)
     {
@@ -65,8 +65,8 @@ class Gower implements Distance, NaNSafe
     /**
      * Compute the distance between two vectors.
      *
-     * @param (string|int|float)[] $a
-     * @param (string|int|float)[] $b
+     * @param list<string|int|float> $a
+     * @param list<string|int|float> $b
      * @return float
      */
     public function compute(array $a, array $b) : float

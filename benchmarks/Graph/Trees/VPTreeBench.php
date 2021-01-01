@@ -1,28 +1,28 @@
 <?php
 
-namespace Rubix\ML\Benchmarks\Transformers;
+namespace Rubix\ML\Benchmarks\Graph\Trees;
 
+use Rubix\ML\Graph\Trees\VPTree;
 use Rubix\ML\Datasets\Generators\Blob;
-use Rubix\ML\Transformers\KBestSelector;
 use Rubix\ML\Datasets\Generators\Agglomerate;
 
 /**
- * @Groups({"Transformers"})
+ * @Groups({"Trees"})
  * @BeforeMethods({"setUp"})
  */
-class KBestSelectorBench
+class VPTreeBench
 {
     protected const DATASET_SIZE = 10000;
 
     /**
-     * @var \Rubix\ML\Datasets\Labeled
+     * @var \Rubix\ML\Datasets\Labeled;
      */
-    public $dataset;
+    protected $dataset;
 
     /**
-     * @var \Rubix\ML\Transformers\KBestSelector
+     * @var \Rubix\ML\Graph\Trees\VPTree
      */
-    protected $transformer;
+    protected $tree;
 
     public function setUp() : void
     {
@@ -34,16 +34,16 @@ class KBestSelectorBench
 
         $this->dataset = $generator->generate(self::DATASET_SIZE);
 
-        $this->transformer = new KBestSelector(2);
+        $this->tree = new VPTree(30);
     }
 
     /**
      * @Subject
      * @Iterations(3)
-     * @OutputTimeUnit("milliseconds", precision=3)
+     * @OutputTimeUnit("seconds", precision=3)
      */
-    public function apply() : void
+    public function grow() : void
     {
-        $this->dataset->apply($this->transformer);
+        $this->tree->grow($this->dataset);
     }
 }
