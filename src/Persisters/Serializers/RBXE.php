@@ -142,7 +142,13 @@ class RBXE implements Serializer
     {
         $encoding = $this->base->serialize($persistable);
 
-        $iv = random_bytes(openssl_cipher_iv_length(self::ENCRYPTION_METHOD));
+        $length = openssl_cipher_iv_length(self::ENCRYPTION_METHOD);
+
+        if ($length === false) {
+            throw new RuntimeException('Invalid encryption method.');
+        }
+
+        $iv = random_bytes($length);
 
         $encrypted = openssl_encrypt($encoding, self::ENCRYPTION_METHOD, $this->digest, OPENSSL_RAW_DATA, $iv);
 
