@@ -27,7 +27,7 @@
         "wamania/php-stemmer": "^2.0"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "2.17.*",
+        "friendsofphp/php-cs-fixer": "2.18.*",
         "phpbench/phpbench": "1.0.0-alpha4",
         "phpstan/extension-installer": "^1.0",
         "phpstan/phpstan": "0.12.*",
