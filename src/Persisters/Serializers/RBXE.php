@@ -5,6 +5,7 @@ namespace Rubix\ML\Persisters\Serializers;
 use Rubix\ML\Encoding;
 use Rubix\ML\Persistable;
 use Rubix\ML\Other\Helpers\JSON;
+use Rubix\ML\Exceptions\ClassRevisionMismatch;
 use Rubix\ML\Exceptions\RuntimeException;
 
 use function extension_loaded;
@@ -22,6 +23,8 @@ use function base64_decode;
 use function random_bytes;
 use function array_pad;
 use function explode;
+
+use const Rubix\ML\VERSION as LIBRARY_VERSION;
 
 /**
  * RBXE
@@ -161,6 +164,7 @@ class RBXE implements Serializer
         $header = JSON::encode([
             'class' => [
                 'name' => get_class($persistable),
+                'version' => LIBRARY_VERSION,
                 'revision' => $persistable->revision(),
             ],
             'data' => [
@@ -249,7 +253,7 @@ class RBXE implements Serializer
         }
 
         if ($persistable->revision() !== $header['class']['revision']) {
-            throw new RuntimeException('Class revision number mismatch.');
+            throw new ClassRevisionMismatch($header['class']['version']);
         }
 
         return $persistable;
