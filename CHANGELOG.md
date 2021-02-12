@@ -1,3 +1,7 @@
+- 0.4.0-beta
+    - Add RBXE serializer
+    - Remove Bzip2 serializer
+
 - 0.3.0-beta
     - Added Vantage Point Tree for spatial queries
     - Added Bzip2 serializers
