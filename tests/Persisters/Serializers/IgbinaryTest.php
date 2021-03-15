@@ -5,16 +5,16 @@ namespace Rubix\ML\Tests\Persisters\Serializers;
 use Rubix\ML\Encoding;
 use Rubix\ML\Persistable;
 use Rubix\ML\Classifiers\DummyClassifier;
-use Rubix\ML\Persisters\Serializers\Bzip2;
+use Rubix\ML\Persisters\Serializers\Igbinary;
 use Rubix\ML\Persisters\Serializers\Serializer;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @group Serializers
- * @requires extension bz2
- * @covers \Rubix\ML\Persisters\Serializers\Bzip2
+ * @requires extension igbinary
+ * @covers \Rubix\ML\Persisters\Serializers\Igbinary
  */
-class Bzip2Test extends TestCase
+class IgbinaryTest extends TestCase
 {
     /**
      * @var \Rubix\ML\Persistable
@@ -22,7 +22,7 @@ class Bzip2Test extends TestCase
     protected $persistable;
 
     /**
-     * @var \Rubix\ML\Persisters\Serializers\Bzip2
+     * @var \Rubix\ML\Persisters\Serializers\Igbinary
      */
     protected $serializer;
 
@@ -31,7 +31,7 @@ class Bzip2Test extends TestCase
      */
     protected function setUp() : void
     {
-        $this->serializer = new Bzip2(4, 0);
+        $this->serializer = new Igbinary();
 
         $this->persistable = new DummyClassifier();
     }
@@ -41,7 +41,7 @@ class Bzip2Test extends TestCase
      */
     public function build() : void
     {
-        $this->assertInstanceOf(Bzip2::class, $this->serializer);
+        $this->assertInstanceOf(Igbinary::class, $this->serializer);
         $this->assertInstanceOf(Serializer::class, $this->serializer);
     }
 

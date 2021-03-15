@@ -10,14 +10,12 @@ Encrypted Rubix Object File format (RBXE) is a format to securely store and shar
 | # | Param | Default | Type | Description |
 |---|---|---|---|---|
 | 1 | password | '' | string | The password used to sign and encrypt the data. |
-| 2 | base | Native | Serializer | The base serializer. |
 
 ## Example
 ```php
 use Rubix\ML\Persisters\Serializers\RBXE;
-use Rubix\ML\Persisters\Serializers\Native;
 
-$serializer = new RBXE('secret', new Native());
+$serializer = new RBXE('secret');
 ```
 
 ### References
