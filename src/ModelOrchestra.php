@@ -15,6 +15,7 @@ use Rubix\ML\Other\Traits\PredictsSingle;
 use Rubix\ML\Backends\Tasks\TrainLearner;
 use Rubix\ML\Other\Traits\Multiprocessing;
 use Rubix\ML\Classifiers\SoftmaxClassifier;
+use Rubix\ML\Other\Traits\AutotrackRevisions;
 use Rubix\ML\Specifications\DatasetIsNotEmpty;
 use Rubix\ML\Specifications\SpecificationChain;
 use Rubix\ML\Specifications\SamplesAreCompatibleWithEstimator;
@@ -36,7 +37,7 @@ use function in_array;
  */
 class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
 {
-    use Multiprocessing, PredictsSingle, LoggerAware;
+    use AutotrackRevisions, Multiprocessing, PredictsSingle, LoggerAware;
 
     /**
      * The members of the orchestra.

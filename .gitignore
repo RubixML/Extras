@@ -4,6 +4,7 @@ composer.lock
 .php_cs.cache
 Thumbs.db
 .DS_Store
+debug.log
 /.idea
 /.vscode
 /.vs

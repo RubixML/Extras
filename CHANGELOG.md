@@ -1,6 +1,10 @@
+- 0.4.0-beta
+    - Added RBXE serializer
+    - Removed Bzip2 serailizer
+
 - 0.3.0-beta
     - Added Vantage Point Tree for spatial queries
-    - Added Bzip2 serializers
+    - Added Bzip2 serializer
     - Added Levenshtein distance kernel
     - Move K Best Selector to main repository
     - Added custom exceptions from the main repo
