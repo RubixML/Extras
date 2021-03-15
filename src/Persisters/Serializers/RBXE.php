@@ -79,7 +79,7 @@ class RBXE implements Serializer
      *
      * @var string
      */
-    protected const HMAC_HASH_TYPE = 'sha256';
+    protected const HMAC_HASH_TYPE = 'sha384';
 
     /**
      * The method used to encrypt the data.
@@ -161,9 +161,11 @@ class RBXE implements Serializer
         $hash = hash_hmac(self::HMAC_HASH_TYPE, $encrypted, $this->digest);
 
         $header = JSON::encode([
+            'library' => [
+                'version' => LIBRARY_VERSION,
+            ],
             'class' => [
                 'name' => get_class($persistable),
-                'version' => LIBRARY_VERSION,
                 'revision' => $persistable->revision(),
             ],
             'data' => [
@@ -252,7 +254,7 @@ class RBXE implements Serializer
         }
 
         if ($persistable->revision() !== $header['class']['revision']) {
-            throw new ClassRevisionMismatch($header['class']['version']);
+            throw new ClassRevisionMismatch($header['library']['version']);
         }
 
         return $persistable;
