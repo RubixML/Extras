@@ -1,6 +1,5 @@
 - 0.4.0-beta
     - Added RBXE serializer
-    - Moved Igbinary serializer from main package
     - Removed Bzip2 serailizer
 
 - 0.3.0-beta
