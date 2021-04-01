@@ -10,10 +10,11 @@
         "ai", "rubixml", "rubix ml"
     ],
     "authors": [
-        {
+        { 
             "name": "Andrew DalPino",
+            "role": "Project Lead",
             "homepage": "https://github.com/andrewdalpino",
-            "role": "Lead Engineer"
+            "email": "support@andrewdalpino.com"
         },
         {
             "name": "Contributors",
@@ -65,6 +66,12 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "process-timeout": 3000
+    },
+    "support": {
+        "issues": "https://github.com/RubixML/Extras/issues",
+        "source": "https://github.com/RubixML/Extras",
+        "chat": "https://t.me/RubixML",
+        "email": "support@andrewdalpino.com"
     },
     "minimum-stability": "dev",
     "prefer-stable": true
