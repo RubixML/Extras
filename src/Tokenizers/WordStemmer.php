@@ -1,6 +1,6 @@
 <?php
 
-namespace Rubix\ML\Other\Tokenizers;
+namespace Rubix\ML\Tokenizers;
 
 use Wamania\Snowball\StemmerFactory;
 

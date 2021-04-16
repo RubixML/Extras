@@ -1,14 +1,14 @@
 <?php
 
-namespace Rubix\ML\Persisters\Serializers;
+namespace Rubix\ML\Serializers;
 
 use Rubix\ML\Encoding;
 use Rubix\ML\Persistable;
-use Rubix\ML\Other\Helpers\JSON;
+use Rubix\ML\Helpers\JSON;
+use Rubix\ML\Specifications\ExtensionIsLoaded;
 use Rubix\ML\Exceptions\ClassRevisionMismatch;
 use Rubix\ML\Exceptions\RuntimeException;
 
-use function extension_loaded;
 use function password_hash;
 use function strlen;
 use function strpos;
@@ -105,7 +105,7 @@ class RBXE implements Serializer
     /**
      * The base serializer.
      *
-     * @var \Rubix\ML\Persisters\Serializers\Gzip
+     * @var \Rubix\ML\Serializers\Gzip
      */
     protected $base;
 
@@ -115,9 +115,7 @@ class RBXE implements Serializer
      */
     public function __construct(string $password)
     {
-        if (!extension_loaded('openssl')) {
-            throw new RuntimeException('Open SSL extension is not loaded, check PHP configuration.');
-        }
+        ExtensionIsLoaded::with('openssl')->check();
 
         $digest = password_hash($password, self::DIGEST_HASH_TYPE, [
             'cost' => self::DIGEST_WORK_FACTOR,
@@ -195,7 +193,7 @@ class RBXE implements Serializer
     }
 
     /**
-     * Unserialize a persistable object and return it.
+     * Deserialize a persistable object and return it.
      *
      * @internal
      *
@@ -203,7 +201,7 @@ class RBXE implements Serializer
      * @throws \Rubix\ML\Exceptions\RuntimeException
      * @return \Rubix\ML\Persistable
      */
-    public function unserialize(Encoding $encoding) : Persistable
+    public function deserialize(Encoding $encoding) : Persistable
     {
         if (strpos($encoding, self::IDENTIFIER_STRING) !== 0) {
             throw new RuntimeException('Unrecognized message format.');
@@ -247,7 +245,7 @@ class RBXE implements Serializer
             throw new RuntimeException('Data could not be decrypted.');
         }
 
-        $persistable = $this->base->unserialize(new Encoding($decrypted));
+        $persistable = $this->base->deserialize(new Encoding($decrypted));
 
         if (get_class($persistable) !== $header['class']['name']) {
             throw new RuntimeException('Class name mismatch.');

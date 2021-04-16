@@ -11,18 +11,18 @@ use Rubix\ML\Persistable;
 use Rubix\ML\EstimatorType;
 use Rubix\ML\ModelOrchestra;
 use Rubix\ML\Backends\Serial;
+use Rubix\ML\Loggers\BlackHole;
 use Rubix\ML\Datasets\Unlabeled;
 use Rubix\ML\Classifiers\GaussianNB;
-use Rubix\ML\Other\Loggers\BlackHole;
 use Rubix\ML\Datasets\Generators\Circle;
 use Rubix\ML\Classifiers\SoftmaxClassifier;
 use Rubix\ML\Classifiers\KNearestNeighbors;
 use Rubix\ML\Classifiers\ClassificationTree;
 use Rubix\ML\Datasets\Generators\Agglomerate;
 use Rubix\ML\CrossValidation\Metrics\Accuracy;
-use PHPUnit\Framework\TestCase;
 use Rubix\ML\Exceptions\InvalidArgumentException;
 use Rubix\ML\Exceptions\RuntimeException;
+use PHPUnit\Framework\TestCase;
 
 class ModelOrchestraTest extends TestCase
 {

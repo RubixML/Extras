@@ -1,3 +1,6 @@
+- 1.0.0-beta
+    - Moved Lambda Function to Extras package
+
 - 0.4.0-beta
     - Added RBXE serializer
     - Removed Bzip2 serailizer
@@ -28,3 +31,4 @@
     - Added ISRU and ISRLU activation functions
     - Added Alpha Dropout hidden layer
     - Added Model Orchestra meta-estimator
+    

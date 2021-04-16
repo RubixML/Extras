@@ -1,19 +1,19 @@
 <?php
 
-namespace Rubix\ML\Tests\Other\Tokenizers;
+namespace Rubix\ML\Tests\Tokenizers;
 
-use Rubix\ML\Other\Tokenizers\Tokenizer;
-use Rubix\ML\Other\Tokenizers\WordStemmer;
+use Rubix\ML\Tokenizers\Tokenizer;
+use Rubix\ML\Tokenizers\WordStemmer;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @group Tokenizers
- * @covers \Rubix\ML\Other\Tokenizers\WordStemmer
+ * @covers \Rubix\ML\Tokenizers\WordStemmer
  */
 class WordStemmerTest extends TestCase
 {
     /**
-     * @var \Rubix\ML\Other\Tokenizers\Word
+     * @var \Rubix\ML\Tokenizers\Word
      */
     protected $tokenizer;
 

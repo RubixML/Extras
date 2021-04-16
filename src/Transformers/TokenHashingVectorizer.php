@@ -4,8 +4,8 @@ namespace Rubix\ML\Transformers;
 
 use Rubix\ML\DataType;
 use Rubix\ML\Datasets\Dataset;
-use Rubix\ML\Other\Tokenizers\Word;
-use Rubix\ML\Other\Tokenizers\Tokenizer;
+use Rubix\ML\Tokenizers\Word;
+use Rubix\ML\Tokenizers\Tokenizer;
 use Rubix\ML\Exceptions\InvalidArgumentException;
 
 use function count;
@@ -44,13 +44,13 @@ class TokenHashingVectorizer implements Transformer
     /**
      * The tokenizer used to extract tokens from blobs of text.
      *
-     * @var \Rubix\ML\Other\Tokenizers\Tokenizer
+     * @var \Rubix\ML\Tokenizers\Tokenizer
      */
     protected $tokenizer;
 
     /**
      * @param int $dimensions
-     * @param \Rubix\ML\Other\Tokenizers\Tokenizer|null $tokenizer
+     * @param \Rubix\ML\Tokenizers\Tokenizer|null $tokenizer
      * @throws \Rubix\ML\Exceptions\InvalidArgumentException
      */
     public function __construct(int $dimensions, ?Tokenizer $tokenizer = null)

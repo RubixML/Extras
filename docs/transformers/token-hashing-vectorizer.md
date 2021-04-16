@@ -16,7 +16,7 @@ Token Hashing Vectorizer builds token count vectors on the fly by employing a *h
 ## Example
 ```php
 use Rubix\ML\Transformers\TokenHashingVectorizer;
-use Rubix\ML\Other\Tokenizers\NGram;
+use Rubix\ML\Tokenizers\NGram;
 
 $transformer = new TokenHashingVectorizer(10000, new NGram(1, 2));
 ```

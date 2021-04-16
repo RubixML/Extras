@@ -2,8 +2,8 @@
 
 namespace Rubix\ML\Tests\Transformers;
 
+use Rubix\ML\Tokenizers\Word;
 use Rubix\ML\Datasets\Unlabeled;
-use Rubix\ML\Other\Tokenizers\Word;
 use Rubix\ML\Transformers\Transformer;
 use Rubix\ML\Transformers\TokenHashingVectorizer;
 use PHPUnit\Framework\TestCase;

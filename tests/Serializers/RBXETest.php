@@ -1,21 +1,21 @@
 <?php
 
-namespace Rubix\ML\Tests\Persisters\Serializers;
+namespace Rubix\ML\Tests\Serializers;
 
 use Rubix\ML\Encoding;
 use Rubix\ML\Persistable;
+use Rubix\ML\Serializers\RBXE;
+use Rubix\ML\Serializers\Serializer;
 use Rubix\ML\Classifiers\DummyClassifier;
-use Rubix\ML\Persisters\Serializers\RBXE;
-use Rubix\ML\Persisters\Serializers\Serializer;
-use PHPUnit\Framework\TestCase;
 use Rubix\ML\Exceptions\RuntimeException;
+use PHPUnit\Framework\TestCase;
 use stdClass;
 
 use function serialize;
 
 /**
  * @group Serializers
- * @covers \Rubix\ML\Persisters\Serializers\RBXE
+ * @covers \Rubix\ML\Serializers\RBXE
  */
 class RBXETest extends TestCase
 {
@@ -25,7 +25,7 @@ class RBXETest extends TestCase
     protected $persistable;
 
     /**
-     * @var \Rubix\ML\Persisters\Serializers\RBXE
+     * @var \Rubix\ML\Serializers\RBXE
      */
     protected $serializer;
 
@@ -51,13 +51,13 @@ class RBXETest extends TestCase
     /**
      * @test
      */
-    public function serializeUnserialize() : void
+    public function serializedeserialize() : void
     {
         $data = $this->serializer->serialize($this->persistable);
 
         $this->assertInstanceOf(Encoding::class, $data);
 
-        $persistable = $this->serializer->unserialize($data);
+        $persistable = $this->serializer->deserialize($data);
 
         $this->assertInstanceOf(DummyClassifier::class, $persistable);
         $this->assertInstanceOf(Persistable::class, $persistable);
@@ -87,6 +87,6 @@ class RBXETest extends TestCase
 
         $this->expectException(RuntimeException::class);
 
-        $this->serializer->unserialize($data);
+        $this->serializer->deserialize($data);
     }
 }

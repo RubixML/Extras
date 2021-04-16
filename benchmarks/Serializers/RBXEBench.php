@@ -2,10 +2,10 @@
 
 namespace Rubix\ML\Benchmarks\Persisters\Serializers;
 
+use Rubix\ML\Serializers\RBXE;
 use Rubix\ML\Datasets\Generators\Blob;
 use Rubix\ML\Classifiers\KNearestNeighbors;
 use Rubix\ML\Datasets\Generators\Agglomerate;
-use Rubix\ML\Persisters\Serializers\RBXE;
 
 /**
  * @Groups({"Serializers"})
@@ -35,7 +35,7 @@ class RBXEBench
 
         $training = $generator->generate(self::TRAINING_SIZE);
 
-        $estimator = new KNearestNeighbors(5, true);
+        $estimator = new KNearestNeighbors(5);
 
         $estimator->train($training);
 
@@ -50,10 +50,10 @@ class RBXEBench
      * @Iterations(5)
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function serializeUnserialize() : void
+    public function serializeDeserialize() : void
     {
         $encoding = $this->serializer->serialize($this->persistable);
 
-        $persistable = $this->serializer->unserialize($encoding);
+        $persistable = $this->serializer->deserialize($encoding);
     }
 }
