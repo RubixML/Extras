@@ -1,5 +1,8 @@
 - 1.0.0-beta
+    - Added Igbinary Serializer
+    - Moved Flysystem Persister from ML package
     - Moved Lambda Function to Extras package
+    - Flatten the Other namespace
 
 - 0.4.0-beta
     - Added RBXE serializer
