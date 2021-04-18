@@ -24,7 +24,7 @@
     "require": {
         "php": ">=7.4",
         "league/flysystem": "^2.0",
-        "rubix/ml": "1.0.0-beta1",
+        "rubix/ml": "1.0.0-beta2",
         "rubix/tensor": "^2.2",
         "wamania/php-stemmer": "^2.0"
     },
