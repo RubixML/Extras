@@ -8,7 +8,7 @@ $ composer require rubix/extras
 ```
 
 ### Requirements
-- [PHP](https://php.net/manual/en/install.php) 7.2 or above
+- [PHP](https://php.net/manual/en/install.php) 7.4 or above
 
 ## License
 The code is licensed [MIT](LICENSE) and the documentation is licensed [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
