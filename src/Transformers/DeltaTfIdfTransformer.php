@@ -148,7 +148,7 @@ class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
 
         $classes = $dataset->possibleOutcomes();
 
-        $zeros = array_fill(0, $dataset->numColumns(), 0);
+        $zeros = array_fill(0, $dataset->numFeatures(), 0);
 
         $this->tfs = array_fill_keys($classes, $zeros);
         $this->dfs = $this->totals = $zeros;
@@ -195,7 +195,7 @@ class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
             $this->tfs[$class] = $tfs;
         }
 
-        $this->n += $dataset->numRows();
+        $this->n += $dataset->numSamples();
 
         $nHat = $this->n + $this->smoothing;
 

@@ -135,7 +135,7 @@ class VPTree implements BinaryTree, Spatial
 
             $current->cleanup();
 
-            if ($left->numRows() > $this->maxLeafSize) {
+            if ($left->numSamples() > $this->maxLeafSize) {
                 $node = VantagePoint::split($left, $this->kernel);
 
                 if ($node->isPoint()) {
@@ -149,7 +149,7 @@ class VPTree implements BinaryTree, Spatial
                 $current->attachLeft(Clique::terminate($left, $this->kernel));
             }
 
-            if ($right->numRows() > $this->maxLeafSize) {
+            if ($right->numSamples() > $this->maxLeafSize) {
                 $node = VantagePoint::split($right, $this->kernel);
 
                 $current->attachRight($node);
