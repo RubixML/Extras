@@ -3,6 +3,7 @@
     - Moved Flysystem Persister from ML package
     - Moved Lambda Function to Extras package
     - Flatten the Other namespace
+    - Move Word Stemmer tokenizer to main package
 
 - 0.4.0-beta
     - Added RBXE serializer
