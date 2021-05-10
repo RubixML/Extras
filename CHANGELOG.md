@@ -1,3 +1,6 @@
+- 1.1.0-beta
+    - Added GELU activation function
+
 - 1.0.0-beta
     - Added Igbinary Serializer
     - Moved Flysystem Persister from ML package
