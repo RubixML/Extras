@@ -3,7 +3,7 @@
 namespace Rubix\ML\Tests\Persisters;
 
 use Rubix\ML\Encoding;
-use Rubix\ML\Persisters\Flysystem;
+use Rubix\ML\Persisters\FlysystemV2;
 use Rubix\ML\Persisters\Persister;
 use League\Flysystem\Filesystem;
 use League\Flysystem\InMemory\InMemoryFilesystemAdapter;
@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  * @group Persisters
  * @covers \Rubix\ML\Persisters\Flysystem
  */
-class FlysystemTest extends TestCase
+class FlysystemV2Test extends TestCase
 {
     /**
      * The path to the test file.
@@ -23,7 +23,7 @@ class FlysystemTest extends TestCase
     protected const PATH = __DIR__ . '/test.model';
 
     /**
-     * @var \Rubix\ML\Persisters\Flysystem
+     * @var \Rubix\ML\Persisters\FlysystemV2
      */
     protected $persister;
 
@@ -32,9 +32,13 @@ class FlysystemTest extends TestCase
      */
     protected function setUp() : void
     {
+        if (!interface_exists('League\Flysystem\FilesystemOperator')) {
+            $this->markTestSkipped();
+        }
+
         $filesystem = new Filesystem(new InMemoryFilesystemAdapter());
 
-        $this->persister = new Flysystem(self::PATH, $filesystem, false);
+        $this->persister = new FlysystemV2(self::PATH, $filesystem, false);
     }
 
     /**
@@ -42,7 +46,7 @@ class FlysystemTest extends TestCase
      */
     public function build() : void
     {
-        $this->assertInstanceOf(Flysystem::class, $this->persister);
+        $this->assertInstanceOf(FlysystemV2::class, $this->persister);
         $this->assertInstanceOf(Persister::class, $this->persister);
     }
 
