@@ -1,5 +1,6 @@
 - 1.1.0-beta
     - Added GELU activation function
+    - Add Flysystem version 1 compatibility
 
 - 1.0.0-beta
     - Added Igbinary Serializer
