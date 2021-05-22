@@ -3,9 +3,6 @@
 # Flysystem
 [Flysystem](https://flysystem.thephpleague.com) is a filesystem library providing a unified storage interface and abstraction layer. It enables access to many different storage backends such as Local, Amazon S3, FTP, and more.
 
-!!! note
-    The Flysystem persister is designed to work with Flysystem version 2.0.
-
 ## Parameters
 | # | Name | Default | Type | Description |
 |---|---|---|---|---|
