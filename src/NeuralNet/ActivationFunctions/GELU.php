@@ -37,6 +37,13 @@ class GELU implements ActivationFunction
     protected const BETA = 0.044715;
 
     /**
+     * Three WTF constants.
+     */
+    protected const TAU = [
+        0.0356774, 0.0535161, 0.398942,
+    ];
+
+    /**
      * Calculate the squared hyperbolic secant of a number.
      *
      * @param float $value
@@ -97,9 +104,9 @@ class GELU implements ActivationFunction
      */
     public function _differentiate(float $z) : float
     {
-        $alpha = 0.0356774 * $z ** 3 + self::ALPHA * $z;
+        $alpha = self::TAU[0] * $z ** 3 + self::ALPHA * $z;
 
-        $beta = 0.0535161 * $z ** 3 + 0.398942 * $z;
+        $beta = self::TAU[1] * $z ** 3 + self::TAU[2] * $z;
 
         return 0.5 * tanh($alpha) + $beta * self::sech2($alpha) + 0.5;
     }

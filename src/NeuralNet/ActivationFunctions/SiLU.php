@@ -7,9 +7,8 @@ use Tensor\Matrix;
 /**
  * SiLU
  *
- * *Sigmoid-weighted Linear Unit* is a smooth rectified activation function that is not
- * monotonically increasing. Instead, a global minimum functions as an implicit regularizer
- * inhibiting the learning of weights of large magnitudes.
+ * *Sigmoid-weighted Linear Unit* is a smooth rectified activation function. A global minimum functions as an
+ * implicit regularizer inhibiting the learning of weights with large magnitudes.
  *
  * References:
  * [1] S. Elwing et al. (2017). Sigmoid-Weighted Linear Units for Neural Network Function
@@ -53,25 +52,11 @@ class SiLU implements ActivationFunction
      */
     public function differentiate(Matrix $z, Matrix $computed) : Matrix
     {
-        $derivative = [];
+        $ones = Matrix::ones(...$computed->shape());
 
-        foreach ($z->asArray() as $i => $rowZ) {
-            $rowComputed = $computed[$i];
-
-            $temp = [];
-
-            foreach ($rowComputed as $j => $valueComputed) {
-                $valueZ = $rowZ[$j];
-
-                $temp[] = $valueZ !== 0.0
-                    ? $valueComputed / $valueZ * (1.0 - $valueComputed) + $valueComputed
-                    : 0.5;
-            }
-
-            $derivative[] = $temp;
-        }
-
-        return Matrix::quick($derivative);
+        return $computed->divide($z)
+            ->multiply($ones->subtract($computed))
+            ->add($computed);
     }
 
     /**
