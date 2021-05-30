@@ -25,7 +25,7 @@
         "php": ">=7.4",
         "league/flysystem": "1.x.x|2.x.x",
         "rubix/ml": "^1.0",
-        "rubix/tensor": "^2.2"
+        "rubix/tensor": "^2.2|^3.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "2.18.*",
