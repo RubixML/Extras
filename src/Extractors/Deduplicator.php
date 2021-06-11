@@ -8,6 +8,9 @@ use Generator;
 
 /**
  * Deduplicator
+ * 
+ * Removes duplicate records from a dataset while the records are in flight. Deduplicator uses a Bloom filter under
+ * the hood to probabilistically identify records the filter has already seen before.
  *
  * @category    Machine Learning
  * @package     Rubix/ML
