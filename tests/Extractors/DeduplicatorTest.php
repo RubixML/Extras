@@ -57,6 +57,10 @@ class DeduplicatorTest extends TestCase
 
         $this->assertEquals($expected, $records);
 
-        $this->assertGreaterThanOrEqual(0.0, $this->extractor->falsePositiveRate());
+        $falsePositiveRate = $this->extractor->falsePositiveRate();
+
+        var_dump($falsePositiveRate);
+
+        $this->assertGreaterThanOrEqual(0.0, $falsePositiveRate);
     }
 }

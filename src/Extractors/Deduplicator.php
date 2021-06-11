@@ -6,9 +6,14 @@ use Rubix\ML\BooleanArray;
 use Rubix\ML\Exceptions\InvalidArgumentException;
 use Generator;
 
+use function serialize;
+use function unpack;
+use function hash;
+use function exp;
+
 /**
  * Deduplicator
- * 
+ *
  * Removes duplicate records from a dataset while the records are in flight. Deduplicator uses a Bloom filter under
  * the hood to probabilistically identify records the filter has already seen before.
  *
