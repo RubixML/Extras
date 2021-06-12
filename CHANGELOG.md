@@ -1,3 +1,6 @@
+- 1.2.0-beta
+    - Added Deduplicator extractor
+
 - 1.1.0-beta
     - Added GELU activation function
     - Add Flysystem version 1 compatibility

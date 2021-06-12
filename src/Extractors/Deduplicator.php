@@ -14,8 +14,8 @@ use function exp;
 /**
  * Deduplicator
  *
- * Removes duplicate records from a dataset while the records are in flight. Deduplicator uses a Bloom filter under
- * the hood to probabilistically identify records the filter has already seen before.
+ * Removes duplicate records from a dataset while the records are in flight. Deduplicator uses a memory-efficient
+ * Bloom filter to probabilistically identify records that have already been seen before.
  *
  * @category    Machine Learning
  * @package     Rubix/ML
@@ -125,17 +125,19 @@ class Deduplicator implements Extractor
     {
         $hashes = $this->hashes($value);
 
+        $exists = true;
+
         foreach ($hashes as $hash) {
             if (!$this->bitmap[$hash]) {
-                foreach ($hashes as $hash) {
-                    $this->bitmap[$hash] = true;
-                }
+                $this->bitmap[$hash] = true;
 
-                return false;
+                if ($exists) {
+                    $exists = false;
+                }
             }
         }
 
-        return true;
+        return $exists;
     }
 
     /**
@@ -152,20 +154,18 @@ class Deduplicator implements Extractor
             $digest = hash(self::HASH_FUNCTION, "$i:$value");
 
             /** @var int[] $bytes */
-            $bytes = unpack('n*', $digest);
-
-            $bytes[1] &= 0x7FFF;
+            $bytes = unpack('S*', $digest);
 
             $hash = 0;
 
             if (PHP_INT_SIZE === 8) {
-                $hash |= $bytes[1] << 0x30;
-                $hash |= $bytes[2] << 0x20;
-                $hash |= $bytes[3] << 0x10;
-                $hash |= $bytes[4] << 0x00;
+                $hash |= $bytes[1] << 48;
+                $hash |= $bytes[2] << 32;
+                $hash |= $bytes[3] << 16;
+                $hash |= $bytes[4];
             } else {
-                $hash |= $bytes[1] << 0x10;
-                $hash |= $bytes[2] << 0x00;
+                $hash |= $bytes[1] << 16;
+                $hash |= $bytes[2];
             }
 
             $hash %= $this->size;
