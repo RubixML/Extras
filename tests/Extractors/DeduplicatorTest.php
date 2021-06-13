@@ -25,7 +25,7 @@ class DeduplicatorTest extends TestCase
      */
     protected function setUp() : void
     {
-        $this->extractor = new Deduplicator(new CSV('tests/test.csv', true), 128, 3);
+        $this->extractor = new Deduplicator(new CSV('tests/test.csv', true), 400, 3);
     }
 
     /**

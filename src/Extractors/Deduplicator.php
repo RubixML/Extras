@@ -24,11 +24,11 @@ use function exp;
 class Deduplicator implements Extractor
 {
     /**
-     * The base hashing function.
+     * The base hash function.
      *
      * @var string
      */
-    protected const HASH_FUNCTION = 'crc32b';
+    protected const HASH_FUNCTION = 'fnv1a32';
 
     /**
      * The base iterator.
@@ -94,7 +94,9 @@ class Deduplicator implements Extractor
      */
     public function falsePositiveRate() : float
     {
-        return (1.0 - exp(-$this->numHashes * $this->n / $this->size)) ** $this->numHashes;
+        $capacity = $this->n / $this->size;
+        
+        return (1.0 - exp(-$this->numHashes * $capacity)) ** $this->numHashes;
     }
 
     /**

@@ -1,7 +1,7 @@
 <span style="float:right;"><a href="https://github.com/RubixML/Extras/blob/master/src/Serializers/RBXE.php">[source]</a></span>
 
 # RBX Encrypted
-Encrypted Rubix Object File format (RBXE) is a format to securely store and share serialized PHP objects. In addition to ensuring data integrity like RBX format, RBXE also adds layers of security such as tamper protection and data encryption while being resilient to brute-force and evasive to timing attacks.
+Encrypted Rubix Object File format (RBXE) is a format to securely store and share serialized PHP objects. In addition to ensuring data integrity like RBX format, RBXE also adds layers of security such as tamper protection and data encryption while being resilient to brute-force attacks.
 
 !!! note
     Requires the PHP [Open SSL extension](https://www.php.net/manual/en/book.openssl.php) to be installed.
