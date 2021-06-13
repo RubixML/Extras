@@ -95,7 +95,7 @@ class Deduplicator implements Extractor
     public function falsePositiveRate() : float
     {
         $capacity = $this->n / $this->size;
-        
+
         return (1.0 - exp(-$this->numHashes * $capacity)) ** $this->numHashes;
     }
 
