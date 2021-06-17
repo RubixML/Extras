@@ -25,7 +25,7 @@ class DeduplicatorTest extends TestCase
      */
     protected function setUp() : void
     {
-        $this->extractor = new Deduplicator(new CSV('tests/test.csv', true), 400, 3);
+        $this->extractor = new Deduplicator(new CSV('tests/test.csv', true));
     }
 
     /**
@@ -56,9 +56,5 @@ class DeduplicatorTest extends TestCase
         $records = iterator_to_array($this->extractor, false);
 
         $this->assertEquals($expected, $records);
-
-        $falsePositiveRate = $this->extractor->falsePositiveRate();
-
-        $this->assertGreaterThanOrEqual(0.0, $falsePositiveRate);
     }
 }

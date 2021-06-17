@@ -4,7 +4,7 @@
 Removes duplicate records from a dataset while the records are in flight. Deduplicator uses a Bloom filter under the hood to probabilistically identify records that have already been seen before.
 
 !!! note
-    Due to its probabilistic nature, Deduplicator may mistakenly drop unique records. The false positive rate depends on the size, number of hash functions, and the number of records in the Bloom filter.
+    Due to its probabilistic nature, Deduplicator may mistakenly drop unique records at a bounded rate.
 
 **Interfaces:** [Extractor](api.md)
 
@@ -12,19 +12,17 @@ Removes duplicate records from a dataset while the records are in flight. Dedupl
 | # | Name | Default | Type | Description |
 |---|---|---|---|---|
 | 1 | iterator | | Traversable | The base iterator. |
-| 2 | size | | int | The size of the Bloom filter. |
-| 3 | numHashes | 3 | int | The number of hash functions. |
+| 2 | maxFalsePositiveRate | 0.001 | float | The false positive rate to remain below. |
+| 3 | numHashes | 4 | int | The number of hash functions used, i.e. the number of slices per layer. Set to null for auto. |
+| 4 | layerSize | 32000000 | int | The size of each layer of the filter in bits. |
 
 ## Example
 ```php
 use Rubix\ML\Extractors\Deduplicator;
 use Rubix\ML\Extractors\CSV;
 
-$extractor = new Deduplicator(new CSV('example.csv', true), 2048000, 3);
+$extractor = new Deduplicator(new CSV('example.csv', true), 0.01, 3, 32000000);
 ```
 
 ## Additional Methods
-Return the probability of mistakenly dropping a unique record.
-```php
-public falsePositiveRate() : float
-```
+This extractor does not have any additional methods.
