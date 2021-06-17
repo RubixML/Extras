@@ -53,8 +53,12 @@ class DeduplicatorTest extends TestCase
             ['attitude' => 'nice', 'texture' => 'furry', 'sociability' => 'loner', 'rating' => '-5', 'class' => 'not monster'],
         ];
 
+        $this->assertEquals(0, $this->extractor->dropped());
+
         $records = iterator_to_array($this->extractor, false);
 
         $this->assertEquals($expected, $records);
+
+        $this->assertEquals(1, $this->extractor->dropped());
     }
 }

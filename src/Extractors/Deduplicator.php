@@ -34,6 +34,13 @@ class Deduplicator implements Extractor
     protected BloomFilter $filter;
 
     /**
+     * The number of records that have been dropped so far.
+     *
+     * @var int
+     */
+    protected int $dropped = 0;
+
+    /**
      * @param iterable<mixed[]> $iterator
      * @param float $maxFalsePositiveRate
      * @param int|null $numHashes
@@ -50,6 +57,16 @@ class Deduplicator implements Extractor
     }
 
     /**
+     * Return the number of records that have been dropped so far.
+     *
+     * @return int
+     */
+    public function dropped() : int
+    {
+        return $this->dropped;
+    }
+
+    /**
      * Return an iterator for the records in the data table.
      *
      * @return \Generator<mixed[]>
@@ -59,9 +76,13 @@ class Deduplicator implements Extractor
         foreach ($this->iterator as $record) {
             $token = serialize($record);
 
-            if (!$this->filter->existsOrInsert($token)) {
-                yield $record;
+            if ($this->filter->existsOrInsert($token)) {
+                ++$this->dropped;
+
+                continue;
             }
+
+            yield $record;
         }
     }
 }

@@ -25,4 +25,7 @@ $extractor = new Deduplicator(new CSV('example.csv', true), 0.01, 3, 32000000);
 ```
 
 ## Additional Methods
-This extractor does not have any additional methods.
+Return the number of records that have been dropped so far.
+```php
+public dropped() : int
+```
