@@ -2,7 +2,6 @@
 
 namespace Rubix\ML\Tests\Classifiers;
 
-use Rubix\ML\Online;
 use Rubix\ML\Learner;
 use Rubix\ML\Verbose;
 use Rubix\ML\DataType;
@@ -11,14 +10,13 @@ use Rubix\ML\Persistable;
 use Rubix\ML\Probabilistic;
 use Rubix\ML\RanksFeatures;
 use Rubix\ML\EstimatorType;
-use Rubix\ML\Loggers\Screen;
+use Rubix\ML\Loggers\BlackHole;
 use Rubix\ML\Datasets\Unlabeled;
-use Rubix\ML\Regressors\RegressionTree;
-use Rubix\ML\Datasets\Generators\Blob;
-use Rubix\ML\CrossValidation\Metrics\FBeta;
 use Rubix\ML\Classifiers\LogitBoost;
+use Rubix\ML\Datasets\Generators\Blob;
+use Rubix\ML\Regressors\RegressionTree;
+use Rubix\ML\CrossValidation\Metrics\FBeta;
 use Rubix\ML\Datasets\Generators\Agglomerate;
-use Rubix\ML\Transformers\ZScaleStandardizer;
 use Rubix\ML\CrossValidation\Metrics\Accuracy;
 use Rubix\ML\Exceptions\RuntimeException;
 use PHPUnit\Framework\TestCase;
@@ -82,7 +80,7 @@ class LogitBoostTest extends TestCase
             'female' => new Blob([63.7, 168.5, 38.1], [0.8, 2.5, 0.4]),
         ], [0.45, 0.55]);
 
-        $this->estimator = new LogitBoost(new RegressionTree(10), 0.1);
+        $this->estimator = new LogitBoost(new RegressionTree(3), 0.1, 0.5, 1000, 1e-4, 10, 0.1, new FBeta(1));
 
         $this->metric = new Accuracy();
 
@@ -148,34 +146,27 @@ class LogitBoostTest extends TestCase
      */
     public function trainPredict() : void
     {
-        $this->estimator->setLogger(new Screen());
+        $this->estimator->setLogger(new BlackHole());
 
-        $dataset = $this->generator->generate(self::TRAIN_SIZE + self::TEST_SIZE);
+        $training = $this->generator->generate(self::TRAIN_SIZE);
+        $testing = $this->generator->generate(self::TEST_SIZE);
 
-        $testing = $dataset->randomize()->take(self::TEST_SIZE);
-
-        $this->estimator->train($dataset);
+        $this->estimator->train($training);
 
         $this->assertTrue($this->estimator->trained());
 
         $losses = $this->estimator->losses();
-
-        var_dump($losses);
 
         $this->assertIsArray($losses);
         $this->assertContainsOnly('float', $losses);
 
         $importances = $this->estimator->featureImportances();
 
-        var_dump($importances);
-
         $this->assertIsArray($importances);
         $this->assertCount(3, $importances);
         $this->assertContainsOnly('float', $importances);
 
         $predictions = $this->estimator->predict($testing);
-
-        var_dump($predictions);
 
         $score = $this->metric->score($predictions, $testing->labels());
 

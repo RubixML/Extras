@@ -127,7 +127,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
     protected \Rubix\ML\CrossValidation\Metrics\Metric $metric;
 
     /**
-     * An ensemble of weak regressors.
+     * The ensemble of weak regressors.
      *
      * @var mixed[]
      */
@@ -152,7 +152,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
     /**
      * The unique class labels.
      *
-     * @var string[]|null
+     * @var mixed[]|null
      */
     protected ?array $classes = null;
 
@@ -166,12 +166,12 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
     /**
      * The logistic sigmoid function.
      *
-     * @param float $z
+     * @param float $value
      * @return float
      */
-    public static function sigmoid(float $z) : float
+    public static function sigmoid(float $value) : float
     {
-        return 1.0 / (1.0 + exp(-$z));
+        return 1.0 / (1.0 + exp(-$value));
     }
 
     /**
@@ -361,7 +361,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
         if (count($classes) !== 2) {
             throw new InvalidArgumentException('Number of classes'
-                . ' must be 2, ' . count($classes) . ' given.');
+                . ' must be exactly 2, ' . count($classes) . ' given.');
         }
 
         [$testing, $training] = $dataset->stratifiedSplit($this->holdOut);
@@ -370,31 +370,31 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
         [$m, $n] = $training->shape();
 
-        $this->ensemble = $this->scores = $this->losses = [];
-
         $this->classes = $classes;
 
         $this->featureCount = $n;
 
-        $out = $prevOut = Vector::zeros($m);
+        $this->ensemble = $this->scores = $this->losses = [];
 
-        $p = Vector::fill(0.0, $m);
+        $z = $prevZ = Vector::zeros($m);
 
-        $classes = array_flip(array_values($classes));
+        $activation = Vector::fill(0.5, $m);
+
+        $classMap = array_flip($classes);
 
         $target = [];
 
         foreach ($training->labels() as $label) {
-            $target[] = (float) $classes[$label];
+            $target[] = (float) $classMap[$label];
         }
 
         $target = Vector::quick($target);
 
         if (!$testing->empty()) {
-            $prevProba = Vector::fill(0.0, $testing->numSamples());
+            $zTest = $prevZTest = Vector::zeros($testing->numSamples());
         }
 
-        $q = max(self::MIN_SUBSAMPLE, (int) round($this->ratio * $training->numSamples()));
+        $p = max(self::MIN_SUBSAMPLE, (int) round($this->ratio * $training->numSamples()));
 
         $bestScore = $min;
         $bestEpoch = $delta = 0;
@@ -402,28 +402,28 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
         $prevLoss = INF;
 
         for ($epoch = 1; $epoch <= $this->estimators; ++$epoch) {
-            $gradient = $target->subtract($p);
+            $gradient = $target->subtract($activation);
 
             $training = Labeled::quick($training->samples(), $gradient->asArray());
 
             $booster = clone $this->booster;
 
-            $subset = $training->randomSubset($q);
+            $subset = $training->randomSubset($p);
 
             $booster->train($subset);
 
             $this->ensemble[] = $booster;
 
-            /** @var list<float> $predictions */
+            /** @var list<int|float> $predictions */
             $predictions = $booster->predict($training);
 
-            $out = Vector::quick($predictions)
+            $z = Vector::quick($predictions)
                 ->multiply($this->rate)
-                ->add($prevOut);
+                ->add($prevZ);
 
-            $p = $out->map([self::class, 'sigmoid']);
+            $activation = $z->map([self::class, 'sigmoid']);
 
-            $entropy = $p->clipLower(EPSILON)->log();
+            $entropy = $activation->clipLower(EPSILON)->log();
 
             $loss = $target->negate()->multiply($entropy)->mean();
 
@@ -437,20 +437,20 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
             $this->losses[$epoch] = $loss;
 
-            if (isset($prevProba)) {
+            if (isset($prevZTest)) {
                 /** @var list<int|float> $predictions */
                 $predictions = $booster->predict($testing);
 
-                $proba = Vector::quick($predictions)
+                $zTest = Vector::quick($predictions)
                     ->multiply($this->rate)
-                    ->add($prevProba);
+                    ->add($prevZTest);
 
-                $pHat = $proba->map([self::class, 'sigmoid']);
+                $activationTest = $zTest->map([self::class, 'sigmoid']);
 
                 $predictions = [];
 
-                foreach ($pHat->asArray() as $probability) {
-                    $predictions[] = $probability > 0.5 ? $this->classes[0] : $this->classes[1];
+                foreach ($activationTest->asArray() as $probability) {
+                    $predictions[] = $probability < 0.5 ? $classes[0] : $classes[1];
                 }
 
                 $score = $this->metric->score($predictions, $testing->labels());
@@ -460,10 +460,10 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
             if ($this->logger) {
                 $this->logger->info("Epoch $epoch - {$this->metric}: "
-                    . ($score ?? 'n/a') . ", L2 Loss: $loss");
+                    . ($score ?? 'n/a') . ", Cross Entropy: $loss");
             }
 
-            if (isset($proba)) {
+            if (isset($zTest)) {
                 if ($score >= $max) {
                     break;
                 }
@@ -481,7 +481,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
                     break;
                 }
 
-                $prevProba = $proba;
+                $prevZTest = $zTest;
             }
 
             if ($loss <= 0.0) {
@@ -492,7 +492,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
                 break;
             }
 
-            $prevOut = $out;
+            $prevZ = $z;
             $prevLoss = $loss;
         }
 
@@ -535,16 +535,18 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
         DatasetHasDimensionality::with($dataset, $this->featureCount)->check();
 
-        $activations = array_fill(0, $dataset->numSamples(), 0.0);
+        $z = array_fill(0, $dataset->numSamples(), 0.0);
 
         foreach ($this->ensemble as $estimator) {
+            $predictions = $estimator->predict($dataset);
+
             /** @var int $j */
-            foreach ($estimator->predict($dataset) as $j => $prediction) {
-                $activations[$j] += $this->rate * $prediction;
+            foreach ($predictions as $j => $prediction) {
+                $z[$j] += $this->rate * $prediction;
             }
         }
 
-        $activations = array_map([self::class, 'sigmoid'], $activations);
+        $activations = array_map([self::class, 'sigmoid'], $z);
 
         [$classA, $classB] = $this->classes;
 
@@ -575,7 +577,9 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
         $importances = array_fill(0, $this->featureCount, 0.0);
 
         foreach ($this->ensemble as $tree) {
-            foreach ($tree->featureImportances() as $column => $importance) {
+            $importances = $tree->featureImportances();
+
+            foreach ($importances as $column => $importance) {
                 $importances[$column] += $importance;
             }
         }
