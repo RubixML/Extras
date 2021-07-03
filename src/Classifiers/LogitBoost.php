@@ -43,11 +43,14 @@ use const Rubix\ML\EPSILON;
 /**
  * Logit Boost
  *
- * A stage-wise additive ensemble that uses regression trees to iteratively learn a logistic regression model.
+ * Logit Boost is a stage-wise additive ensemble that uses regression trees to iteratively learn a logistic regression model
+ * for binary classification problems.
  *
  * References:
  * [1] J. H. Friedman et al. (2000). Additive Logistic Regression: A Statistical View of Boosting.
  * [2] J. H. Friedman. (2001). Greedy Function Approximation: A Gradient Boosting Machine.
+ * [3] J. H. Friedman. (1999). Stochastic Gradient Boosting.
+ * [4] Y. Wei. et al. (2017). Early stopping for kernel boosting algorithms: A general analysis with localized complexities.
  *
  * @category    Machine Learning
  * @package     Rubix/ML
@@ -75,7 +78,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
     protected const MIN_SUBSAMPLE = 1;
 
     /**
-     * The regressor that will fix up the error residuals of the *weak* base learner.
+     * The regressor used to fix up error residuals.
      *
      * @var \Rubix\ML\Learner
      */
@@ -110,8 +113,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
     protected float $minChange;
 
     /**
-     * The number of epochs without improvement in the validation score to wait
-     * before considering an early stop.
+     * The number of epochs without improvement in the validation score to wait before considering an early stop.
      *
      * @var int
      */
@@ -132,7 +134,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
     protected \Rubix\ML\CrossValidation\Metrics\Metric $metric;
 
     /**
-     * The ensemble of weak regressors.
+     * The ensemble of boosters.
      *
      * @var mixed[]|null
      */
@@ -384,6 +386,8 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
                 . ' must be exactly 2, ' . count($classes) . ' given.');
         }
 
+        $classMap = array_flip($classes);
+
         [$testing, $training] = $dataset->stratifiedSplit($this->holdOut);
 
         [$min, $max] = $this->metric->range()->list();
@@ -398,8 +402,6 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
         $z = $prevZ = Vector::zeros($m);
         $activation = Vector::fill(0.5, $m);
-
-        $classMap = array_flip($classes);
 
         $target = [];
 
