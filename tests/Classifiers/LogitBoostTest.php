@@ -80,7 +80,7 @@ class LogitBoostTest extends TestCase
             'female' => new Blob([63.7, 168.5, 38.1], [0.8, 2.5, 0.4]),
         ], [0.45, 0.55]);
 
-        $this->estimator = new LogitBoost(new RegressionTree(3), 0.1, 0.5, 1000, 1e-4, 10, 0.1, new FBeta(1));
+        $this->estimator = new LogitBoost(new RegressionTree(3), 0.1, 0.5, 1000, 1e-4, 10, 0.1, new FBeta());
 
         $this->metric = new Accuracy();
 
@@ -154,6 +154,11 @@ class LogitBoostTest extends TestCase
         $this->estimator->train($training);
 
         $this->assertTrue($this->estimator->trained());
+
+        $scores = $this->estimator->losses();
+
+        $this->assertIsArray($scores);
+        $this->assertContainsOnly('float', $scores);
 
         $losses = $this->estimator->losses();
 
