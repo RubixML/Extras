@@ -42,7 +42,11 @@ use const Rubix\ML\EPSILON;
 /**
  * Logit Boost
  *
+ * A stage-wise additive ensemble that uses regression trees to iteratively learn a logistic regression model.
+ *
  * References:
+ * [1] J. H. Friedman et al. (2000). Additive Logistic Regression: A Statistical View of Boosting.
+ * [2] J. H. Friedman. (2001). Greedy Function Approximation: A Gradient Boosting Machine.
  *
  * @category    Machine Learning
  * @package     Rubix/ML
@@ -53,7 +57,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
     use AutotrackRevisions, LoggerAware;
 
     /**
-     * The class names of the compatible learners to used as boosters.
+     * The class names of the learners that can be used as boosters.
      *
      * @var class-string[]
      */
@@ -188,7 +192,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
     public function __construct(
         ?Learner $booster = null,
         float $rate = 0.1,
-        float $ratio = 0.5,
+        float $ratio = 1.0,
         int $estimators = 1000,
         float $minChange = 1e-4,
         int $window = 10,
@@ -241,7 +245,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
         $this->minChange = $minChange;
         $this->window = $window;
         $this->holdOut = $holdOut;
-        $this->metric = $metric ?? new FBeta(1.0);
+        $this->metric = $metric ?? new FBeta();
     }
 
     /**
@@ -378,7 +382,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
         $z = $prevZ = Vector::zeros($m);
 
-        $activation = Vector::fill(0.5, $m);
+        $activation = Vector::zeros($m);
 
         $classMap = array_flip($classes);
 
@@ -396,6 +400,10 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
         $p = max(self::MIN_SUBSAMPLE, (int) round($this->ratio * $training->numSamples()));
 
+        $weights = Vector::fill(1.0 / $m, $m)->asArray();
+
+        $ones = Vector::ones($m);
+
         $bestScore = $min;
         $bestEpoch = $delta = 0;
         $score = null;
@@ -408,7 +416,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
             $booster = clone $this->booster;
 
-            $subset = $training->randomSubset($p);
+            $subset = $training->randomWeightedSubsetWithReplacement($p, $weights);
 
             $booster->train($subset);
 
@@ -491,6 +499,8 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
             if (abs($prevLoss - $loss) < $this->minChange) {
                 break;
             }
+
+            $weights = $activation->multiply($ones->subtract($activation))->asArray();
 
             $prevZ = $z;
             $prevLoss = $loss;

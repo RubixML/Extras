@@ -1,4 +1,5 @@
 - 1.2.0-beta
+    - Added LogitBoost classifier
     - Added Deduplicator extractor
 
 - 1.1.0-beta
