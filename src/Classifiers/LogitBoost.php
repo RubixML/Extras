@@ -624,6 +624,6 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
      */
     public function __toString() : string
     {
-        return 'Gradient Boost (' . Params::stringify($this->params()) . ')';
+        return 'Logit Boost (' . Params::stringify($this->params()) . ')';
     }
 }
