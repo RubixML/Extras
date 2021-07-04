@@ -38,8 +38,6 @@ use function in_array;
 use function abs;
 use function get_object_vars;
 
-use const Rubix\ML\EPSILON;
-
 /**
  * Logit Boost
  *
@@ -386,22 +384,13 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
                 . ' must be exactly 2, ' . count($classes) . ' given.');
         }
 
-        $classMap = array_flip($classes);
-
         [$testing, $training] = $dataset->stratifiedSplit($this->holdOut);
 
         [$min, $max] = $this->metric->range()->list();
 
         [$m, $n] = $training->shape();
 
-        $this->classes = $classes;
-
-        $this->featureCount = $n;
-
-        $this->ensemble = $this->scores = $this->losses = [];
-
-        $z = $prevZ = Vector::zeros($m);
-        $activation = Vector::fill(0.5, $m);
+        $classMap = array_flip($classes);
 
         $target = [];
 
@@ -411,15 +400,23 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
         $target = Vector::quick($target);
 
+        $z = $prevZ = Vector::zeros($m);
+        $activation = Vector::fill(0.5, $m);
+
         if (!$testing->empty()) {
             $zTest = $prevZTest = Vector::zeros($testing->numSamples());
         }
 
-        $p = max(self::MIN_SUBSAMPLE, (int) round($this->ratio * $training->numSamples()));
+        $p = max(self::MIN_SUBSAMPLE, (int) round($this->ratio * $m));
 
         $epsilon = 2.0 * CPU::epsilon();
 
         $weights = Vector::fill(max($epsilon, 1.0 / $m), $m)->asArray();
+
+        $this->classes = $classes;
+        $this->featureCount = $n;
+
+        $this->ensemble = $this->scores = $this->losses = [];
 
         $bestScore = $min;
         $bestEpoch = $delta = 0;
@@ -446,7 +443,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
 
             $activation = $z->map([self::class, 'sigmoid']);
 
-            $entropy = $activation->clipLower(EPSILON)->log();
+            $entropy = $activation->clipLower($epsilon)->log();
 
             $loss = $target->negate()->multiply($entropy)->mean();
 
@@ -527,7 +524,7 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
             }
         }
 
-        if ($this->scores and end($this->scores) < $bestScore) {
+        if ($this->scores and end($this->scores) <= $bestScore) {
             if ($this->logger) {
                 $this->logger->info("Restoring model state to epoch $bestEpoch");
             }
@@ -614,10 +611,10 @@ class LogitBoost implements Estimator, Learner, Probabilistic, RanksFeatures, Ve
             }
         }
 
-        $estimators = count($this->ensemble);
+        $numEstimators = count($this->ensemble);
 
         foreach ($importances as &$importance) {
-            $importance /= $estimators;
+            $importance /= $numEstimators;
         }
 
         return $importances;
