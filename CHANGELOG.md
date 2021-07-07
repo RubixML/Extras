@@ -1,5 +1,6 @@
 - 1.2.0-beta
     - Added Deduplicator extractor
+    - Implement K-mer tokenizer
 
 - 1.1.0-beta
     - Added GELU activation function
