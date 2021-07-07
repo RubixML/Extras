@@ -25,7 +25,7 @@
         "php": ">=7.4",
         "league/flysystem": "1.x.x|2.x.x",
         "rubix/ml": "^1.0",
-        "rubix/tensor": "^2.2|^3.0",
+        "scienide/tensor": "^3.0",
         "scienide/okbloomer": "^1.0@beta"
     },
     "require-dev": {
