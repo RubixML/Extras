@@ -69,6 +69,12 @@
         "sort-packages": true,
         "process-timeout": 3000
     },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/andrewdalpino"
+        }
+    ],
     "support": {
         "issues": "https://github.com/RubixML/Extras/issues",
         "source": "https://github.com/RubixML/Extras",
