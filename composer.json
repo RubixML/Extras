@@ -25,13 +25,12 @@
         "php": ">=7.4",
         "league/flysystem": "1.x.x|2.x.x",
         "rubix/ml": "^1.0",
-        "scienide/tensor": "^3.0",
         "scienide/okbloomer": "^1.0@beta"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "2.18.*",
+        "friendsofphp/php-cs-fixer": "^3.1",
         "league/flysystem-memory": "1.x.x|2.x.x",
-        "phpbench/phpbench": "1.0.0-alpha8",
+        "phpbench/phpbench": "^1.0",
         "phpstan/extension-installer": "^1.0",
         "phpstan/phpstan": "0.12.*",
         "phpstan/phpstan-phpunit": "0.12.*",
@@ -59,9 +58,9 @@
         "benchmark": "phpbench run --report=env --report=aggregate",
         "check": [
             "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
-            "php-cs-fixer fix --config=.php_cs.dist -v --dry-run --using-cache=no"
+            "php-cs-fixer fix --config=.php-cs-fixer.dist.php -v --dry-run --using-cache=no"
         ],
-        "fix": "php-cs-fixer fix --config=.php_cs.dist",
+        "fix": "php-cs-fixer fix --config=.php-cs-fixer.dist.php",
         "test": "phpunit"
     },
     "config": {
