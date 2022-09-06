@@ -3,13 +3,13 @@
 namespace Rubix\ML\Benchmarks\NeuralNet\ActivationFunctions;
 
 use Tensor\Matrix;
-use Rubix\ML\NeuralNet\ActivationFunctions\SiLU;
+use Rubix\ML\NeuralNet\ActivationFunctions\GELU;
 
 /**
  * @Groups({"ActivationFunctions"})
  * @BeforeMethods({"setUp"})
  */
-class SiLUBench
+class GELUBench
 {
     /**
      * @var \Tensor\Matrix
@@ -22,7 +22,7 @@ class SiLUBench
     protected $computed;
 
     /**
-     * @var \Rubix\ML\NeuralNet\ActivationFunctions\SiLU
+     * @var \Rubix\ML\NeuralNet\ActivationFunctions\GELU
      */
     protected $activationFn;
 
@@ -32,7 +32,7 @@ class SiLUBench
 
         $this->computed = Matrix::uniform(500, 500);
 
-        $this->activationFn = new SiLU();
+        $this->activationFn = new GELU();
     }
 
     /**
@@ -42,7 +42,7 @@ class SiLUBench
      */
     public function compute() : void
     {
-        $this->activationFn->compute($this->z);
+        $this->activationFn->activate($this->z);
     }
 
     /**

@@ -46,7 +46,7 @@ class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
      * The class specific term frequencies of each word i.e. the number of
      * times a word appears in the context of a class label.
      *
-     * @var array[]|null
+     * @var array<array<float>>|null
      */
     protected $tfs;
 
@@ -177,7 +177,7 @@ class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
             return;
         }
 
-        foreach ($dataset->stratify() as $class => $stratum) {
+        foreach ($dataset->stratifyByLabel() as $class => $stratum) {
             $tfs = $this->tfs[$class];
 
             foreach ($stratum->samples() as $sample) {
@@ -222,7 +222,7 @@ class DeltaTfIdfTransformer implements Transformer, Stateful, Elastic
     /**
      * Transform the dataset in place.
      *
-     * @param array[] $samples
+     * @param array<array<mixed>> $samples
      * @throws \Rubix\ML\Exceptions\RuntimeException
      */
     public function transform(array &$samples) : void

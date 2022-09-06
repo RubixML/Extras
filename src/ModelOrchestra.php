@@ -321,7 +321,7 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
      * Extract features from the ensemble members.
      *
      * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @return array[]
+     * @return array<array<mixed>>
      */
     protected function extract(Dataset $dataset) : array
     {
@@ -339,7 +339,7 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
      * Extract features from an ensemble of classifiers.
      *
      * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @return array[]
+     * @return array<array<mixed>>
      */
     protected function extractClassifier(Dataset $dataset) : array
     {
@@ -366,7 +366,7 @@ class ModelOrchestra implements Learner, Parallel, Persistable, Verbose
      * Extract features from an ensemble of regressors.
      *
      * @param \Rubix\ML\Datasets\Dataset $dataset
-     * @return array[]
+     * @return array<array<mixed>>
      */
     protected function extractRegressor(Dataset $dataset) : array
     {

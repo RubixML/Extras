@@ -3,5 +3,4 @@ parameters:
     paths:
         - 'src'
         - 'tests'
-    excludePaths:
-        - *FlysystemV1*
+        - 'benchmarks'

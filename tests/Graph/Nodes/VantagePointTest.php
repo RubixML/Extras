@@ -88,13 +88,13 @@ class VantagePointTest extends TestCase
     /**
      * @test
      */
-    public function groups() : void
+    public function subsets() : void
     {
         $expected = [
             Labeled::quick([self::SAMPLES[0]], [self::LABELS[0]]),
             Labeled::quick([self::SAMPLES[1]], [self::LABELS[1]]),
         ];
 
-        $this->assertEquals($expected, $this->node->groups());
+        $this->assertEquals($expected, $this->node->subsets());
     }
 }

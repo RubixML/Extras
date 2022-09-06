@@ -10,6 +10,10 @@ use Rubix\ML\Transformers\DeltaTfIdfTransformer;
 use PHPUnit\Framework\TestCase;
 use Rubix\ML\Exceptions\RuntimeException;
 
+/**
+ * @group Transformers
+ * @covers \Rubix\ML\Transformers\DeltaTfIdfTransformer
+ */
 class DeltaTfIdfTransformerTest extends TestCase
 {
     /**

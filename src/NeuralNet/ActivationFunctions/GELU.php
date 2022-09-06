@@ -68,9 +68,9 @@ class GELU implements ActivationFunction
      * @param \Tensor\Matrix $z
      * @return \Tensor\Matrix
      */
-    public function compute(Matrix $z) : Matrix
+    public function activate(Matrix $z) : Matrix
     {
-        return $z->map([$this, '_compute']);
+        return $z->map([$this, 'compute']);
     }
 
     /**
@@ -91,7 +91,7 @@ class GELU implements ActivationFunction
      * @param float $z
      * @return float
      */
-    public function _compute(float $z) : float
+    public function compute(float $z) : float
     {
         return 0.5 * $z * (1.0 + tanh(self::ALPHA * ($z + self::BETA * $z ** 3)));
     }

@@ -1,3 +1,9 @@
+- 2.0.0-beta
+    - Works with ML 2.0
+    - Move SiLU activation function over to main repo
+    - Move Deduplicator Extractor to main repo
+    - Remove Flysystem Persister
+
 - 1.2.0-beta
     - Added Deduplicator extractor
     - Implement K-mer tokenizer

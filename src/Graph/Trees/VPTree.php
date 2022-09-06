@@ -2,14 +2,13 @@
 
 namespace Rubix\ML\Graph\Trees;
 
-use Rubix\ML\Datasets\Dataset;
 use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\Graph\Nodes\Clique;
 use Rubix\ML\Graph\Nodes\Hypersphere;
 use Rubix\ML\Graph\Nodes\VantagePoint;
 use Rubix\ML\Kernels\Distance\Distance;
 use Rubix\ML\Kernels\Distance\Euclidean;
-use InvalidArgumentException;
+use Rubix\ML\Exceptions\InvalidArgumentException;
 use SplObjectStorage;
 
 use function count;
@@ -131,7 +130,7 @@ class VPTree implements BinaryTree, Spatial
         $stack = [$this->root];
 
         while ($current = array_pop($stack)) {
-            [$left, $right] = $current->groups();
+            [$left, $right] = $current->subsets();
 
             $current->cleanup();
 
@@ -167,8 +166,8 @@ class VPTree implements BinaryTree, Spatial
      *
      * @param (string|int|float)[] $sample
      * @param int $k
-     * @throws \InvalidArgumentException
-     * @return array[]
+     * @throws \Rubix\ML\Exceptions\InvalidArgumentException
+     * @return array<array<mixed>>
      */
     public function nearest(array $sample, int $k = 1) : array
     {
@@ -234,14 +233,12 @@ class VPTree implements BinaryTree, Spatial
     }
 
     /**
-     * Return all samples, labels, and distances within a given radius of a
-     * sample.
+     * Return all samples, labels, and distances within a given radius of a sample.
      *
      * @param (string|int|float)[] $sample
      * @param float $radius
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
-     * @return array[]
+     * @throws \Rubix\ML\Exceptions\InvalidArgumentException
+     * @return array<array<mixed>>
      */
     public function range(array $sample, float $radius) : array
     {
