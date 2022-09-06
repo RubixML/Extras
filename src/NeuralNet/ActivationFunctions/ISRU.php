@@ -48,16 +48,16 @@ class ISRU implements ActivationFunction
      * @param \Tensor\Matrix $z
      * @return \Tensor\Matrix
      */
-    public function compute(Matrix $z) : Matrix
+    public function activate(Matrix $z) : Matrix
     {
-        return $z->map([$this, '_compute']);
+        return $z->map([$this, 'compute']);
     }
 
     /**
      * @param float $z
      * @return float
      */
-    public function _compute(float $z) : float
+    public function compute(float $z) : float
     {
         return $z / sqrt(1.0 + $this->alpha * $z ** 2);
     }

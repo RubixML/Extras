@@ -25,12 +25,12 @@ class BM25TransformerBench
     protected $transformer;
 
     /**
-     * @var array[]
+     * @var array<array<mixed>>
      */
     protected $aSamples;
 
     /**
-     * @var array[]
+     * @var array<array<mixed>>
      */
     protected $bSamples;
 

@@ -12,7 +12,6 @@
     "authors": [
         { 
             "name": "Andrew DalPino",
-            "role": "Project Lead",
             "homepage": "https://github.com/andrewdalpino",
             "email": "support@andrewdalpino.com"
         },
@@ -23,18 +22,15 @@
     ],
     "require": {
         "php": ">=7.4",
-        "league/flysystem": "1.x.x|2.x.x",
-        "rubix/ml": "^1.0",
-        "scienide/okbloomer": "^1.0@beta"
+        "rubix/ml": "^2.0"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.1",
-        "league/flysystem-memory": "1.x.x|2.x.x",
+        "friendsofphp/php-cs-fixer": "^3.0",
         "phpbench/phpbench": "^1.0",
         "phpstan/extension-installer": "^1.0",
-        "phpstan/phpstan": "0.12.*",
-        "phpstan/phpstan-phpunit": "0.12.*",
-        "phpunit/phpunit": "8.5.*"
+        "phpstan/phpstan": "^1.0",
+        "phpstan/phpstan-phpunit": "^1.0",
+        "phpunit/phpunit": "^9.0"
     },
     "autoload": {
         "psr-4": {
@@ -66,12 +62,15 @@
     "config": {
         "preferred-install": "dist",
         "sort-packages": true,
-        "process-timeout": 3000
+        "process-timeout": 3000,
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
     },
     "funding": [
         {
             "type": "github",
-            "url": "https://github.com/sponsors/andrewdalpino"
+            "url": "https://github.com/sponsors/RubixML"
         }
     ],
     "support": {

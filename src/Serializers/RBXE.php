@@ -105,7 +105,7 @@ class RBXE implements Serializer
     /**
      * The base serializer.
      *
-     * @var \Rubix\ML\Serializers\Gzip
+     * @var \Rubix\ML\Serializers\GzipNative
      */
     protected $base;
 
@@ -126,7 +126,7 @@ class RBXE implements Serializer
         }
 
         $this->digest = $digest;
-        $this->base = new Gzip(9);
+        $this->base = new GzipNative(9);
     }
 
     /**
@@ -148,6 +148,7 @@ class RBXE implements Serializer
             throw new RuntimeException('Invalid encryption method.');
         }
 
+        /** @var int<1,max> $length */
         $iv = random_bytes($length);
 
         $encrypted = openssl_encrypt($encoding, self::ENCRYPTION_METHOD, $this->digest, OPENSSL_RAW_DATA, $iv);

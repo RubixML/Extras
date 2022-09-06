@@ -41,17 +41,17 @@ class ISRUTest extends TestCase
      * @dataProvider computeProvider
      *
      * @param \Tensor\Matrix $input
-     * @param array[] $expected
+     * @param array<array<float>> $expected
      */
     public function compute(Matrix $input, array $expected) : void
     {
-        $activations = $this->activationFn->compute($input)->asArray();
+        $activations = $this->activationFn->activate($input)->asArray();
 
         $this->assertEquals($expected, $activations);
     }
 
     /**
-     * @return \Generator<array>
+     * @return \Generator<array<mixed>>
      */
     public function computeProvider() : Generator
     {
@@ -84,7 +84,7 @@ class ISRUTest extends TestCase
      *
      * @param \Tensor\Matrix $input
      * @param \Tensor\Matrix $activations
-     * @param array[] $expected
+     * @param array<array<mixed>> $expected
      */
     public function differentiate(Matrix $input, Matrix $activations, array $expected) : void
     {
@@ -94,7 +94,7 @@ class ISRUTest extends TestCase
     }
 
     /**
-     * @return \Generator<array>
+     * @return \Generator<array<mixed>>
      */
     public function differentiateProvider() : Generator
     {

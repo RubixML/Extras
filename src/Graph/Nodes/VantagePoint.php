@@ -2,10 +2,11 @@
 
 namespace Rubix\ML\Graph\Nodes;
 
-use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\Helpers\Stats;
+use Rubix\ML\Datasets\Labeled;
 use Rubix\ML\Kernels\Distance\Distance;
-use Rubix\ML\Graph\Nodes\Traits\HasBinaryChildren;
+use Rubix\ML\Graph\Nodes\Traits\HasBinaryChildrenTrait;
+use Rubix\ML\Exceptions\RuntimeException;
 
 use function Rubix\ML\argmax;
 
@@ -16,9 +17,9 @@ use function Rubix\ML\argmax;
  * @package     Rubix/ML
  * @author      Andrew DalPino
  */
-class VantagePoint implements BinaryNode, Hypersphere
+class VantagePoint implements Hypersphere, HasBinaryChildren
 {
-    use HasBinaryChildren;
+    use HasBinaryChildrenTrait;
 
     /**
      * The center or multivariate mean of the centroid.
@@ -37,9 +38,9 @@ class VantagePoint implements BinaryNode, Hypersphere
     /**
      * The left and right splits of the training data.
      *
-     * @var array{Labeled,Labeled}
+     * @var array{Labeled,Labeled}|null
      */
-    protected $groups;
+    protected $subsets;
 
     /**
      * Factory method to build a hypersphere by splitting the dataset into left and right clusters.
@@ -94,13 +95,13 @@ class VantagePoint implements BinaryNode, Hypersphere
     /**
      * @param list<string|int|float> $center
      * @param float $radius
-     * @param array{Labeled,Labeled} $groups
+     * @param array{Labeled,Labeled} $subsets
      */
-    public function __construct(array $center, float $radius, array $groups)
+    public function __construct(array $center, float $radius, array $subsets)
     {
         $this->center = $center;
         $this->radius = $radius;
-        $this->groups = $groups;
+        $this->subsets = $subsets;
     }
 
     /**
@@ -124,13 +125,18 @@ class VantagePoint implements BinaryNode, Hypersphere
     }
 
     /**
-     * Return the left and right splits of the training data.
+     * Return the left and right subsets of the training data.
      *
-     * @return array{Labeled,Labeled}
+     * @throws \Rubix\ML\Exceptions\RuntimeException
+     * @return array{\Rubix\ML\Datasets\Labeled,\Rubix\ML\Datasets\Labeled}
      */
-    public function groups() : array
+    public function subsets() : array
     {
-        return $this->groups;
+        if (!isset($this->subsets)) {
+            throw new RuntimeException('Subsets property does not exist.');
+        }
+
+        return $this->subsets;
     }
 
     /**
@@ -148,6 +154,6 @@ class VantagePoint implements BinaryNode, Hypersphere
      */
     public function cleanup() : void
     {
-        unset($this->groups);
+        unset($this->subsets);
     }
 }
