@@ -24,6 +24,10 @@ use Rubix\ML\Exceptions\InvalidArgumentException;
 use Rubix\ML\Exceptions\RuntimeException;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @group Transformers
+ * @covers \Rubix\ML\Transformers\ModelOrchestra
+ */
 class ModelOrchestraTest extends TestCase
 {
     protected const TRAIN_SIZE = 400;
