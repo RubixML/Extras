@@ -1,3 +1,6 @@
+- 2.0.1-beta
+    - Remove Gower distance kernel
+
 - 2.0.0-beta
     - Works with ML 2.0
     - Move SiLU activation function over to main repo
